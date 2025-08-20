@@ -6,15 +6,9 @@ from .utils import get_logger
 
 class MP2Calculator:
     def __init__(self):
-        self.logger = get_logger(__name__)  # CHANGE: Added logger
+        self.logger = get_logger(__name__)
 
     def occ_frozen(self, occ, nmo, nfo, twoelecint_mo, Fock_mo, hf_mo_E):
-        if nfo < 0 or nfo > occ:
-            self.logger.error(f"Invalid nfo: {nfo}, must be 0 <= nfo <= {occ}")
-            raise ValueError(f"Invalid nfo: {nfo}")
-        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo):
-            self.logger.error(f"Invalid twoelecint_mo shape: {twoelecint_mo.shape}")
-            raise ValueError(f"Invalid twoelecint_mo shape")
         occ -= nfo
         nmo -= nfo
         twoelecint_mo = cp.deepcopy(twoelecint_mo[nfo:, nfo:, nfo:, nfo:])
@@ -25,18 +19,12 @@ class MP2Calculator:
         return occ, nmo, twoelecint_mo, Fock_mo, hf_mo_E
 
     def virt_frozen(self, virt, nmo, nfo, nfv, nao, twoelecint_mo, Fock_mo, hf_mo_E):
-        if nfv < 0 or nfv > virt:
-            self.logger.error(f"Invalid nfv: {nfv}, must be 0 <= nfv <= {virt}")
-            raise ValueError(f"Invalid nfv: {nfv}")
-        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo):
-            self.logger.error(f"Invalid twoelecint_mo shape: {twoelecint_mo.shape}")
-            raise ValueError(f"Invalid twoelecint_mo shape")
         twoelecint_mo = cp.deepcopy(twoelecint_mo[:-nfv, :-nfv, :-nfv, :-nfv])
         Fock_mo = cp.deepcopy(Fock_mo[:-nfv, :-nfv])
         hf_mo_E = hf_mo_E[:-nfv]
-        nao -= nfv + nfo
-        nmo -= nfv
-        virt -= nfv
+        nao = nao - nfv - nfo
+        nmo = nmo - nfv
+        virt = virt - nfv
         gc.collect()
         self.logger.debug(f"Froze {nfv} virtual orbitals")
         return nao, nmo, virt, twoelecint_mo, Fock_mo, hf_mo_E
@@ -50,8 +38,7 @@ class MP2Calculator:
         for i in range(occ):
             for a in range(occ, nmo):
                 D1[i, a - occ] = hf_mo_E[i] - hf_mo_E[a]
-                if abs(D1[i, a - occ]) > 1e-10:
-                    t1[i, a - occ] = Fock_mo[i, a] / D1[i, a - occ]
+                t1[i, a - occ] = Fock_mo[i, a] / D1[i, a - occ]
         self.logger.debug("Computed initial t1 guess")
         return t1, D1
 
@@ -66,8 +53,7 @@ class MP2Calculator:
                 for a in range(occ, nmo):
                     for b in range(occ, nmo):
                         D2[i, j, a - occ, b - occ] = hf_mo_E[i] + hf_mo_E[j] - hf_mo_E[a] - hf_mo_E[b]
-                        if abs(D2[i, j, a - occ, b - occ]) > 1e-10:
-                            t2[i, j, a - occ, b - occ] = twoelecint_mo[i, j, a, b] / D2[i, j, a - occ, b - occ]
+                        t2[i, j, a - occ, b - occ] = twoelecint_mo[i, j, a, b] / D2[i, j, a - occ, b - occ]
         self.logger.debug("Computed initial t2 guess")
         return t2, D2
 
@@ -82,8 +68,7 @@ class MP2Calculator:
                 for a in range(virt):
                     for k in range(occ - o_act, occ):
                         Do[i, j, a, k - occ + o_act] = hf_mo_E[i] + hf_mo_E[j] - hf_mo_E[a + occ] + hf_mo_E[k]
-                        if abs(Do[i, j, a, k - occ + o_act]) > 1e-10:
-                            So[i, j, a, k - occ + o_act] = twoelecint_mo[i, j, a + occ, k] / Do[i, j, a, k - occ + o_act]
+                        So[i, j, a, k - occ + o_act] = twoelecint_mo[i, j, a + occ, k] / Do[i, j, a, k - occ + o_act]
         self.logger.debug("Computed initial So guess")
         return So, Do
 
@@ -98,8 +83,7 @@ class MP2Calculator:
                 for a in range(virt):
                     for b in range(virt):
                         Dv[i, c, a, b] = hf_mo_E[i] - hf_mo_E[c + occ] - hf_mo_E[a + occ] - hf_mo_E[b + occ]
-                        if abs(Dv[i, c, a, b]) > 1e-10:
-                            Sv[i, c, a, b] = twoelecint_mo[i, c + occ, a + occ, b + occ] / Dv[i, c, a, b]
+                        Sv[i, c, a, b] = twoelecint_mo[i, c + occ, a + occ, b + occ] / Dv[i, c, a, b]
         self.logger.debug("Computed initial Sv guess")
         return Sv, Dv
 
@@ -109,5 +93,4 @@ class MP2Calculator:
             raise ValueError(f"Invalid t2 shape")
         E_mp2 = 2 * np.einsum('ijab,ijab', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao]) - np.einsum('ijab,ijba', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao])
         E_mp2_tot = E_hf + E_mp2
-        self.logger.info(f"MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
         return E_mp2, E_mp2_tot

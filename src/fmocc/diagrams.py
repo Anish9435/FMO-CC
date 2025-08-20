@@ -21,7 +21,7 @@ class DiagramBuilder:
         I_oo += 2 * np.einsum('ibkj,jb->ik', twoelecint_mo[:occ, occ:nao, :occ, :occ], t1) - np.einsum('ibjk,jb->ik', twoelecint_mo[:occ, occ:nao, :occ, :occ], t1)
         R_ijab1 = cp.deepcopy(twoelecint_mo[:occ, :occ, occ:nao, occ:nao])
         R_ijab1 += np.einsum('ik,jkab->ijab', I_oo, tau) + np.einsum('ca,ijbc->ijab', I_vv, tau)
-        gc.collect()
+
         return R_ia1, R_ijab1
 
     def update2(self, occ, nao, t1, tau, twoelecint_mo):
@@ -36,7 +36,7 @@ class DiagramBuilder:
         R_ijab2 += -np.einsum('icak,jc,kb->ijab',twoelecint_mo[:occ,occ:nao,occ:nao,:occ],t1,t1)      #diagrams non-linear 4
         R_ijab2 += -np.einsum('ijkb,ka->ijab',twoelecint_mo[:occ,:occ,:occ,occ:nao],t1)               #diagram linear 3
         R_ijab2 += np.einsum('cjab,ic->ijab',twoelecint_mo[occ:nao,:occ,occ:nao,occ:nao],t1)          #diagram linear 4
-        gc.collect()
+
         return R_ia2,R_ijab2
 
     def update3(self, occ, nao, tau, t1, t2, twoelecint_mo):
@@ -47,7 +47,6 @@ class DiagramBuilder:
         R_ijab3 = 0.5*np.einsum('ijkl,klab->ijab',Ioooo,tau)                                          #diagrams 1,38
         R_ijab3 += np.einsum('ijkl,klab->ijab',Ioooo_2,t2)                                            #diagram 37
 
-        gc.collect()
         return R_ijab3
 
     def update4(self, occ, nao, t1, t2, twoelecint_mo):
@@ -60,7 +59,6 @@ class DiagramBuilder:
         R_ijab4 += -np.einsum('icka,kjcb->ijab',Iovov_2,t2)
         R_ijab4 += -np.einsum('ickb,jc,ka->ijab',Iovov_3,t1,t1)                                       #diagrams 36
         
-        gc.collect()
         return R_ijab4
 
 
@@ -74,7 +72,6 @@ class DiagramBuilder:
 
         R_ijab5 = -np.einsum('ijak,kb->ijab',I_oovo,t1)                                               #diagrams 11,12,13,15,17
         
-        gc.collect()
         return R_ijab5
 
     def update6(self, occ, virt, nao, t1, t2, twoelecint_mo):
@@ -87,7 +84,6 @@ class DiagramBuilder:
 
         R_ijab6 = np.einsum('cjab,ic->ijab',I_vovv,t1)                                                #diagrams 9,10,14,16,18,31,37,39
 
-        gc.collect()
         return R_ijab6
 
     def update7(self, occ, nao, t1, t2, twoelecint_mo):
@@ -104,21 +100,18 @@ class DiagramBuilder:
         R_ijab7 += - np.einsum('jcbk,ikca->ijab',Iovvo_2,t2)
         R_ijab7 += -np.einsum('jcbk,ic,ka->ijab',Iovvo_3,t1,t1)                                       #diagrams 32,33,31,30
 
-        gc.collect()
         return R_ijab7
 
     def update8(self, occ, nao, t1, t2, twoelecint_mo):
         I_voov = -np.einsum('cdkl,kjdb->cjlb',twoelecint_mo[occ:nao,occ:nao,:occ,:occ],t2)            #intermediate for diagrams 39
         R_ijab8 = -np.einsum('cjlb,ic,la->ijab',I_voov,t1,t1)                                         #diagram 39
 
-        gc.collect()
         return R_ijab8
 
     def update9(self, occ, nao, tau, twoelecint_mo):
         Ivvvv = cp.deepcopy(twoelecint_mo[occ:nao, occ:nao, occ:nao, occ:nao])
         R_ijab9 = 0.5 * np.einsum('cdab,ijcd->ijab', Ivvvv, tau)                                          #diagram 2,linear 5
 
-        gc.collect()
         return R_ijab9
 
     def update10(self, occ, nao, t1, t2, twoelecint_mo):
@@ -133,10 +126,9 @@ class DiagramBuilder:
         R_ijab10 = -np.einsum('ijlb,la->ijab',Iooov,t1)                                               #diagram 34,30
         R_ijab10 += -0.5*np.einsum('idal,jd,lb->ijab',I3,t1,t1)                                       #diagram 40
 
-        gc.collect()
         return R_ia10,R_ijab10
 
-    def update11(self, So, Sv, t2, occ, virt, v_act, o_act, nao, twoelecint_mo):
+    def update11(self, So, Sv, t2, occ, v_act, o_act, nao, twoelecint_mo):
         I4_v = 2*np.einsum('cdkj,kbcd->bj',twoelecint_mo[occ:nao,occ:nao,:occ,:occ],Sv)
         I4_o = -2*np.einsum('cbkl,klcj->bj',twoelecint_mo[occ:nao,occ:nao,:occ,:occ],So)
         I5_v = -np.einsum('cdkj,kbdc->bj',twoelecint_mo[occ:nao,occ:nao,:occ,:occ],Sv)
@@ -151,7 +143,6 @@ class DiagramBuilder:
         R_ia11 += 2*np.einsum('bj,jiba->ia',I5_v,t2[:,:,:v_act,:],optimize=True)
         R_ia11 += np.einsum('bj,ijba->ia',I5_v,t2[:,:,:v_act,:],optimize=True)
 
-        gc.collect()
         return R_ia11
 
     def So_int_diagrams(self, occ, o_act, nao, So, t2, twoelecint_mo):
@@ -159,8 +150,7 @@ class DiagramBuilder:
         II_oo[:,occ-o_act:occ] += -2*0.25*np.einsum('ciml,mlcv->iv',twoelecint_mo[occ:nao,:occ,:occ,:occ],So) + 0.25*np.einsum('diml,lmdv->iv',twoelecint_mo[occ:nao,:occ,:occ,:occ],So)
 
         R_ijab = -np.einsum('ik,kjab->ijab',II_oo,t2)
-        
-        gc.collect()
+
         return R_ijab,II_oo
 
     def Sv_int_diagrams(self, occ, virt, v_act, nao, Sv, t2, twoelecint_mo):
@@ -168,8 +158,7 @@ class DiagramBuilder:
         II_vv[:v_act,:] += 2*0.25*np.einsum('dema,mude->ua',twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv) - 0.25*np.einsum('dema,mued->ua',twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv)
 
         R_ijab = np.einsum('ca,ijcb->ijab',II_vv,t2)
-        
-        gc.collect()
+
         return R_ijab,II_vv
     
     def Sv_diagrams(self, occ,v_act,nao,Sv,t1,t2,Fock_mo,twoelecint_mo):
@@ -189,7 +178,6 @@ class DiagramBuilder:
         R_iuab += -np.einsum('idkb,kuad->iuab',twoelecint_mo[:occ,occ:nao,:occ,occ:nao],Sv)
         #R_iuab += -np.einsum('iwab,uw->iuab',Sv,II_vv[:v_act,:v_act])     #### -(Sv(H,Sv)_c)_c term
 
-        gc.collect()
         return R_iuab
 
     def So_diagrams(self,occ,o_act,nao,So,t1,t2,Fock_mo,twoelecint_mo):
@@ -208,16 +196,14 @@ class DiagramBuilder:
         R_ijav += -np.einsum('jdla,ildv->ijav',twoelecint_mo[:occ,occ:nao,:occ,occ:nao],So)
         R_ijav += -np.einsum('idlv,ljad->ijav',twoelecint_mo[:occ,occ:nao,:occ,occ-o_act:occ],t2)
         #R_ijav += np.einsum('ijax,xv->ijav',So,II_oo[occ-o_act:occ,occ-o_act:occ])     #### -(So(H.So)_c)_c term
-        
-        gc.collect()
+
         return R_ijav
     
     def T1_contribution_Sv(self,occ,nao,v_act,t1,twoelecint_mo):
         R_iuab = -np.einsum('uika,kb->iuab',twoelecint_mo[occ:occ+v_act,:occ,:occ,occ:nao],t1)
         R_iuab += np.einsum('duab,id->iuab',twoelecint_mo[occ:nao,occ:occ+v_act,occ:nao,occ:nao],t1)
         R_iuab += -np.einsum('iukb,ka->iuab',twoelecint_mo[:occ,occ:occ+v_act,:occ,occ:nao],t1)
-        
-        gc.collect()
+
         return R_iuab
 
     def T1_contribution_So(occ,nao,o_act,t1,twoelecint_mo):
@@ -225,5 +211,4 @@ class DiagramBuilder:
         R_ijav += np.einsum('djav,id->ijav',twoelecint_mo[occ:nao,:occ,occ:nao,occ-o_act:occ],t1)
         R_ijav += -np.einsum('ijkv,ka->ijav',twoelecint_mo[:occ,:occ,:occ,occ-o_act:occ],t1)
 
-        gc.collect()
         return R_ijav

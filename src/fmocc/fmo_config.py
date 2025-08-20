@@ -1,3 +1,4 @@
+from ast import pattern
 import json
 from itertools import combinations
 from typing import List, Dict, Any
@@ -12,7 +13,7 @@ class FMOConfig:
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.logger.error(f"Error reading {input_file}: {e}")
             raise ValueError(f"Error reading {input_file}: {e}")
-
+        self.data = data
         required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge"]
         for key in required_keys:
             if key not in data:
@@ -93,7 +94,7 @@ class FMOConfig:
         self.nmo_mono = self.nao_mono[:]
         self.nmo_dimer = self.nao_dimer[:]
         self.frag_elec = self._compute_frag_elec()
-        self.occ_mono = [int(e / 2) for e in self.frag_elec]
+        self.occ_mono = [int(e // 2) for e in self.frag_elec]
         self.virt_mono = [nmo - occ for nmo, occ in zip(self.nmo_mono, self.occ_mono)]
         self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
         self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
@@ -106,16 +107,34 @@ class FMOConfig:
         self.nfo_dimer = [self.nfo * 2] * len(self.nao_dimer)
         self.nfv_dimer = [self.nfv * 2] * len(self.nao_dimer)
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}")  # CHANGE: Logging update
+        self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
+        self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
+        self.logger.info(f"Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")
+        self.logger.info(f"Active virtual orbitals for dimer: {self.v_act_dimer} and for monomer: {self.v_act_mono}")
+        self.logger.info(f"Number of frozen occupied orbitals for dimer: {self.nfo_dimer} and for monomer: {self.nfo_mono}")
+        self.logger.info(f"Number of frozen virtual orbitals for dimer: {self.nfv_dimer} and for monomer: {self.nfv_mono}")
+        self.logger.info(f"Total number of electrons in fragments: {self.frag_elec}")
 
     def _compute_frag_elec(self) -> List[int]:
-        elec_map = {
-            "1": 1, "H": 1, "2": 2, "He": 2, "6": 6, "C": 6,
-            "7": 7, "N": 7, "8": 8, "O": 8, "9": 9, "F": 9
-        }
-        try:
-            result = [sum(int(elec_map.get(e, 0)) for e in self.elements[i::self.nfrag]) for i in range(self.nfrag)]
-            self.logger.info(f"Computed fragment electrons: {result}")  # CHANGE: Logging
-            return result
-        except KeyError as e:
-            self.logger.error(f"Invalid element in JSON: {e}")
-            raise ValueError(f"Invalid element in JSON: {e}")
+        elec_map = {"1": 1, "H": 1, "2": 2, "He": 2,
+                    "6": 6, "C": 6, "7": 7, "N": 7,
+                    "8": 8, "O": 8, "9": 9, "F": 9}
+
+        # You must specify one repeating unit (monomer pattern) in JSON
+        # Example: "atom_pattern": ["8","1","1"] for H2O
+        pattern = self.data.get("atom_pattern", [])
+        if not pattern:
+            raise ValueError("Please specify 'atom_pattern' in JSON, e.g. ['8','1','1'] for water")
+
+        result = []
+        for frag in self.fragment_index:
+            start, end = frag
+            length = end - start + 1
+            # build the atom list for this fragment by repeating pattern
+            atoms = [pattern[i % len(pattern)] for i in range(length)]
+            # sum electrons
+            frag_elec = sum(elec_map[a] for a in atoms)
+            result.append(frag_elec)
+
+        self.logger.info(f"Computed fragment electrons: {result}")
+        return result

@@ -6,7 +6,7 @@ import os
 from .utils import get_logger
 
 class FMOExtractor:
-    def __init__(self, gamess_out, gamess_2eint, nmer, outfile1, outfile2, outfile3, tempfile, tempfile2):
+    def __init__(self, gamess_out, gamess_2eint, outfile1, outfile2, outfile3, tempfile, tempfile2):
         self.logger = get_logger(__name__)
         if not os.path.exists(gamess_out):
             raise FileNotFoundError(f"GAMESS output file {gamess_out} not found")
@@ -19,7 +19,6 @@ class FMOExtractor:
         self.gamess_2eint = gamess_2eint
         self.tempfile = tempfile
         self.tempfile2 = tempfile2
-        self.nmer = nmer
         self.dimer_key = ['iFrag', 'jFrag']
         self.mono_key = ['iFrag', 'Iter']
         self.string_list = ['II,JST,KST,LST', 'SCHWARZ INEQUALITY']
@@ -85,8 +84,6 @@ class FMOExtractor:
                 natoms.append(val2)
             else:
                 break
-        nao1.sort()
-        natoms.sort()
         self.logger.info(f"Extracted nao1: {nao1}, natoms: {natoms}")
         return nao1, natoms
     
@@ -114,7 +111,7 @@ class FMOExtractor:
             raise RuntimeError(f"Error parsing nelec from {self.gamess_out}: {e}")
         return 0
     
-    def coeff(self, lnum):
+    def coeff(self, lnum, nmer, outfile1):
         with open(self.gamess_out, 'r') as infile:
             inlines = infile.readlines()
         ini_idx = 0
@@ -122,7 +119,7 @@ class FMOExtractor:
         count = 0
         total_lines = lnum
         for i, line in enumerate(reversed(inlines[:lnum])):
-            if self.nmer == 2:
+            if nmer == 2:
                 if all(word in line for word in self.dimer_key):
                     self.ifrag = int(line.split()[1])
                     self.jfrag = int(line.split()[3])
@@ -132,7 +129,7 @@ class FMOExtractor:
                     self.lnum = total_lines - i
                     ini_idx = total_lines - i + 1
                     break
-            elif self.nmer == 1:
+            elif nmer == 1:
                 if all(word in line for word in self.mono_key):
                     x1, x2, x3, ifrag, x4, Erhf = line.split()
                     self.ifrag = int(ifrag)
@@ -148,12 +145,12 @@ class FMOExtractor:
                 content.append(line)
             else:
                 break
-        with open(self.outfile1, 'w') as outf:
+        with open(outfile1, 'w') as outf:
             outf.writelines(content)
-        self.logger.info(f"Extracted coefficients to {self.outfile1}")
+        self.logger.info(f"Extracted coefficients to {outfile1}")
         return self.ifrag, self.jfrag, self.Erhf, lnum
     
-    def bare_hamiltonian(self, lnum):
+    def bare_hamiltonian(self, lnum, nmer, outfile2):
         with open(self.gamess_out, 'r') as infile:
             inlines = infile.readlines()
         ini_idx = 0
@@ -161,7 +158,7 @@ class FMOExtractor:
         count = 0
         tot = lnum
         for i,line in enumerate(reversed(inlines[:lnum])):
-            if self.nmer == 2:
+            if nmer == 2:
                 if all(word in line for word in self.dimer_key):
                     self.ifrag = int(line.split()[1])
                     self.jfrag = int(line.split()[3])
@@ -172,7 +169,7 @@ class FMOExtractor:
                         self.lnum = tot-i
                         ini_idx = tot-i+1
                         break
-            if self.nmer == 1:
+            if nmer == 1:
                 if all(word in line for word in self.mono_key):
                     x1, x2, x3, ifrag, x4 , Erhf = line.split()
                     self.ifrag = int(ifrag)
@@ -188,12 +185,12 @@ class FMOExtractor:
                 content.append(line)
             else:
                 break
-        with open(self.outfile2, 'w') as outf:
+        with open(outfile2, 'w') as outf:
             outf.writelines(content)
-        self.logger.info(f"Extracted bare Hamiltonian to {self.outfile2}")
+        self.logger.info(f"Extracted bare Hamiltonian to {outfile2}")
         return self.ifrag, self.jfrag, self.Erhf
     
-    def twoelecint(self, lnum):                                                                                         
+    def twoelecint(self, lnum, nmer, outfile3):                                                                                         
         with open(self.gamess_2eint, 'r') as infile:
             inlines = infile.readlines()
         ini_idx = 0
@@ -201,7 +198,7 @@ class FMOExtractor:
         count = 0
         tot = lnum
         for i,line in enumerate(reversed(inlines[:lnum])):
-            if self.nmer == 2:
+            if nmer == 2:
                 if all(word in line for word in self.dimer_key):
                     self.ifrag = int(line.split()[1])
                     self.jfrag = int(line.split()[3])
@@ -212,7 +209,7 @@ class FMOExtractor:
                         lnum = tot-i
                         ini_idx = tot-i
                         break
-            if self.nmer == 1:
+            if nmer == 1:
                 if all(word in line for word in self.mono_key):
                     x1, x2, x3, ifrag, x4 , Erhf = line.split()
                     self.ifrag = int(ifrag)
@@ -229,13 +226,13 @@ class FMOExtractor:
                 content.append(line)
             else:
                 break
-        with open(self.outfile3, 'w') as outf:
+        with open(outfile3, 'w') as outf:
             outf.writelines(content)
-        self.logger.info(f"Extracted two-electron integrals to {self.outfile3}")
+        self.logger.info(f"Extracted two-electron integrals to {outfile3}")
         return self.ifrag, self.jfrag, self.Erhf, lnum
 
-    def get_coeff(self, nmo, nao):
-        with open(self.outfile1, 'r') as infile:
+    def get_coeff(self, nmo, nao, outfile1):
+        with open(outfile1, 'r') as infile:
             inlines = infile.readlines()
         elements = np.zeros((nmo,nao))
         m = 4
@@ -289,9 +286,9 @@ class FMOExtractor:
         elements = np.transpose(elements)
         self.logger.info(f"Extracted coefficients with shape {elements.shape} from {self.outfile1}")
         return elements
-    
-    def get_orb_energy(self, nao, nmo):
-        with open(self.outfile1, 'r') as infile:
+
+    def get_orb_energy(self, nao, nmo, outfile1):
+        with open(outfile1, 'r') as infile:
             inlines = infile.readlines()
         orb_energy = []
         m = 2
@@ -339,9 +336,9 @@ class FMOExtractor:
         self.logger.info(f"Extracted orbital energies with shape {orb_energy.shape} from {self.outfile1}")
         return orb_energy
 
-    def get_1e_parameter(self, nao):
-        with open(self.outfile2, 'r') as infile:
-            inlines = infile.readlines()     
+    def get_1e_parameter(self, nao, outfile2):
+        with open(outfile2, 'r') as infile:
+            inlines = infile.readlines()
         elements=np.zeros((nao,nao))
         r = nao%5
         q = int(nao/5)
@@ -372,28 +369,33 @@ class FMOExtractor:
         self.logger.info(f"Extracted one-electron parameters with shape {elements.shape} from {self.outfile2}")
         return elements
 
-    def twoelecint_process(self):
+    def twoelecint_process(self, outfile3, tempfile):
         try:
-            with open(self.outfile3, 'r') as infile:
+            with open(outfile3, 'r') as infile:
                 lines = infile.readlines()
-            with open(self.tempfile, 'w') as outf:
+            with open(tempfile, 'w') as outf:
                 for line in lines:
                     if not any(s in line for s in self.string_list):
                         outf.write(line)
-            self.logger.info(f"Processed two-electron integrals and saved to {self.tempfile}")
+            self.logger.info(f"Processed two-electron integrals and saved to {tempfile}")
             return 0
         except Exception as e:
             raise RuntimeError(f"Error processing two-electron integrals: {e}")
 
     def bash_run(self):
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        script_path  = os.path.join(project_root, 'Scripts', 'twoeint_process.sh')
+        if not os.path.exists(script_path):
+            raise RuntimeError(f"Script not found: {script_path}")
         try:
-            subprocess.run(['bash', 'scripts/twoeint_process.sh'], check=True)
+            os.chmod(script_path, 0o755)
+            subprocess.run(['bash', script_path], check=True)
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Error running twoeint_process.sh: {e}")
 
-    def read_2eint(self, nao):
+    def read_2eint(self, nao, tempfile2):
         try:
-            with open(self.tempfile2, 'r') as infile:
+            with open(tempfile2, 'r') as infile:
                 lines = infile.readlines()
             twoeint = np.zeros((nao, nao, nao, nao))
             length = len(lines)
@@ -407,10 +409,10 @@ class FMOExtractor:
                 twoeint[int(idx4)-1,int(idx3)-1,int(idx1)-1,int(idx2)-1] = cp.deepcopy(float(val))
                 twoeint[int(idx1)-1,int(idx2)-1,int(idx4)-1,int(idx3)-1] = cp.deepcopy(float(val))
                 twoeint[int(idx3)-1,int(idx4)-1,int(idx2)-1,int(idx1)-1] = cp.deepcopy(float(val))
-            self.logger.info(f"Read two-electron integrals with shape {twoeint.shape} from {self.tempfile2}")
+            self.logger.info(f"Read two-electron integrals with shape {twoeint.shape} from {tempfile2}")
             return twoeint
         except Exception as e:
-            raise RuntimeError(f"Error reading 2e integrals from {self.tempfile2}: {e}")
+            raise RuntimeError(f"Error reading 2e integrals from {tempfile2}: {e}")
 
     def cleanup(self):
         files = glob.glob('*.txt')

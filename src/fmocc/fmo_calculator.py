@@ -3,7 +3,7 @@ import subprocess
 from itertools import combinations
 from .MP2 import MP2Calculator
 from .main_parallel import CCParallel
-from .logger import get_logger
+from .utils import get_logger
 
 class FMOCalculator:
     def __init__(self, config, extractor):

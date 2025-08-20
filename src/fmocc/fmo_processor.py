@@ -4,7 +4,7 @@ from fmo_config import FMOConfig
 from fmo_extractor import FMOExtractor
 from fmo_calculator import FMOCalculator
 from itertools import combinations
-from .logger import get_logger
+from .utils import get_logger
 
 class FMOProcessor:
     def __init__(self, input_file):
@@ -56,3 +56,5 @@ class FMOProcessor:
 
         end = time.time()
         self.logger.info(f"Parallel overall time: {end - start} seconds")
+
+        return fmo_cc_corr, Tot_CC

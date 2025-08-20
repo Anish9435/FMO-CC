@@ -2,7 +2,7 @@ import numpy as np
 import copy as cp
 import gc
 from multiprocessing import Pool
-from .logger import get_logger
+from .utils import get_logger
 
 class DiagramBuilder:
     def __init__(self):

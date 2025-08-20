@@ -1,6 +1,6 @@
 import sys
-from fmocc.fmo_processor import FMOProcessor #type: ignore
-from fmocc.logger import get_logger #type: ignore
+from fmocc.fmo_processor import FMOProcessor
+from fmocc.utils import get_logger
 
 def main():
     logger = get_logger(__name__)

@@ -5,9 +5,7 @@ import time
 
 from sqlalchemy import Tuple
 from diagrams import DiagramBuilder
-from cc_update import AmplitudeUpdater
-from cc_symmetrize import Symmetrizer
-from .logger import get_logger
+from .utils import Symmetrizer, AmplitudeUpdater, get_logger
 
 class CCParallel:
     def __init__(self):

@@ -3,7 +3,7 @@ import subprocess
 import copy as cp
 import glob
 import os
-from .logger import get_logger
+from .utils import get_logger
 
 class FMOExtractor:
     def __init__(self, gamess_out, gamess_2eint, nmer, outfile1, outfile2, outfile3, tempfile, tempfile2):

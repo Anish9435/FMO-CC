@@ -2,7 +2,7 @@ import numpy as np
 import gc
 import copy as cp
 from typing import Tuple
-from .logger import get_logger
+from .utils import get_logger
 
 class MP2Calculator:
     def __init__(self):

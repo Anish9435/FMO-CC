@@ -1,7 +1,7 @@
 import json
 from itertools import combinations
 from typing import List, Dict, Any
-from .logger import get_logger
+from .utils import get_logger
 
 class FMOConfig:
     def __init__(self, input_file: str):

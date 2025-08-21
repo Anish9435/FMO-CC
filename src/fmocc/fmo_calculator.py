@@ -3,11 +3,11 @@ import subprocess
 from itertools import combinations
 from .MP2 import MP2Calculator
 from .main_parallel import CCParallel
-from .utils import get_logger
+from .utils import FMOCC_LOGGER
 
 class FMOCalculator:
     def __init__(self, config, extractor, processor):
-        self.logger = get_logger(__name__)
+        self.logger = FMOCC_LOGGER
         self.config = config
         self.extractor = extractor
         self.processor = processor
@@ -45,14 +45,13 @@ class FMOCalculator:
         ifrag, _, Erhf = self.extractor.bare_hamiltonian(lnum1, 1, hamiltonian_file)
         self.logger.info(f"Monomer {ifrag}: RHF energy: {Erhf}")
         Fock = self.extractor.get_1e_parameter(nao, hamiltonian_file)
-        ifrag, jfrag, Erhf, lnum2 = self.extractor.twoelecint(lnum2, 1, twoelecint_file)
+        ifrag, _, Erhf, lnum2 = self.extractor.twoelecint(lnum2, 1, twoelecint_file)
         self.extractor.twoelecint_process(twoelecint_file, temp_file)
         self.extractor.bash_run()
         twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
-        ifrag, jfrag, Erhf, lnum1 = self.extractor.coeff(lnum1, 1, coeff_file)
+        ifrag, _, Erhf, lnum1 = self.extractor.coeff(lnum1, 1, coeff_file)
         coeff = self.extractor.get_coeff(nmo, nao, coeff_file)
         hf_mo_E = self.extractor.get_orb_energy(nao, nmo, coeff_file)
-        self.logger.info(f"Monomer {ifrag}: Orbital energies : {hf_mo_E}")
         Fock_mo = np.diag(hf_mo_E)
 
         twoelecint_mo = self._transform_2eint(coeff, twoeint)
@@ -100,7 +99,6 @@ class FMOCalculator:
         ifrag, jfrag, Erhf, lnum1 = self.extractor.coeff(lnum1, 2, coeff_file)
         coeff = self.extractor.get_coeff(nmo, nao, coeff_file)
         hf_mo_E = self.extractor.get_orb_energy(nao, nmo, coeff_file)
-        self.logger.info(f"Dimer ({ifrag},{jfrag}): Orbital energies : {hf_mo_E}")
         Fock_mo = np.diag(hf_mo_E)
 
         twoelecint_mo = self._transform_2eint(coeff, twoeint)

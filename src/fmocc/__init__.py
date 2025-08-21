@@ -5,7 +5,7 @@ from .diagrams import DiagramBuilder
 from .main_parallel import CCParallel
 from .fmo_calculator import FMOCalculator
 from .fmo_processor import FMOProcessor
-from .utils import Symmetrizer, AmplitudeUpdater, get_logger
+from .utils import Symmetrizer, AmplitudeUpdater
 
 __all__ = [
     "FMOConfig",
@@ -17,5 +17,4 @@ __all__ = [
     "CCParallel",
     "FMOCalculator",
     "FMOProcessor",
-    "get_logger",
 ]

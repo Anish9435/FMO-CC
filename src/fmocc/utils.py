@@ -1,46 +1,106 @@
+import os
+import gc
+import re
+import shutil
 import logging
-from logging.handlers import RotatingFileHandler
 import numpy as np
 import copy as cp
-import gc
+from queue import Queue
+from colorama import init  # type: ignore
 from typing import Optional
+from colorlog import ColoredFormatter
+from logging.handlers import RotatingFileHandler, QueueHandler
 
-def get_logger(name: str, log_file: str = "fmocc.log") -> logging.Logger:
-    """
-    Configure and return a logger with console and file handlers.
+init(autoreset=True)
+log_queue = Queue()
+class CustomColoredFormatter(ColoredFormatter):
+    def format(self, record):
+        timestamp = self.formatTime(record, self.datefmt)
+        levelname = record.levelname
+        green = "\033[32m"
+        reset = "\033[0m"
+        formatted_prefix = f"{green}{timestamp} [{levelname}]:{reset}"
+        yellow = "\033[33m"
+        formatted_details = f"{yellow}{record.filename}:{record.funcName}:{record.lineno} -{reset}"
+        record.msg = self._auto_color_message(str(record.msg))
+        formatted_message = f"{formatted_prefix} {formatted_details} {record.msg}"
+        return formatted_message
     
-    Args:
-        name (str): Logger name, typically module name.
-        log_file (str): Path to log file.
-    
-    Returns:
-        logging.Logger: Configured logger instance.
-    """
-    logger = logging.getLogger(name)
-    if logger.hasHandlers():
-        return logger
-    
-    logger.setLevel(logging.INFO)
-    
-    # Console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    console_handler.setFormatter(console_formatter)
-    
-    # File handler with rotation
-    try:
-        file_handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
-        file_handler.setLevel(logging.INFO)
-        file_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        file_handler.setFormatter(file_formatter)
-        logger.addHandler(file_handler)
-    except (PermissionError, OSError) as e:
-        console_handler.error(f"Failed to set up file handler for logging: {e}")
-    
-    logger.addHandler(console_handler)
-    return logger
+    def _auto_color_message(self, message: str) -> str:
+        RESET = "\033[0m"
+        CYAN = "\033[36m"
+        MAGENTA = "\033[35m"
 
+        # Color file paths (e.g., /path/to/file)
+        message = re.sub(r'(/[\w\-/\.]+)', rf'{CYAN}\1{RESET}', message)
+
+        # Highlight fmocc-specific keywords
+        message = re.sub(r'\b(fragment|monomer|dimer|energy|correlation|converged)\b',
+                         rf'{MAGENTA}\1{RESET}', message, flags=re.IGNORECASE)
+
+        return message
+
+formatter = CustomColoredFormatter(
+    "%(log_color)s%(message)s",  # Message is fully formatted in CustomColoredFormatter
+    datefmt="%Y-%m-%d %H:%M:%S",
+    log_colors={
+        'DEBUG': 'cyan',
+        'INFO': 'white',  # Message body in white
+        'WARNING': 'yellow',
+        'ERROR': 'red',
+        'CRITICAL': 'bold_red',
+    }
+)
+
+# Stream handler for console output
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+console_handler.setLevel(logging.INFO)
+
+# File handler for logging to file
+log_file = "fmocc.log"  # CHANGE: Consistent log file name
+file_handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
+plain_formatter = logging.Formatter(
+    "%(asctime)s [%(levelname)s]: %(filename)s:%(funcName)s:%(lineno)d - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+file_handler.setFormatter(plain_formatter)
+file_handler.setLevel(logging.DEBUG)
+
+# QueueHandler for log queue
+queue_handler = QueueHandler(log_queue)
+queue_handler.setFormatter(plain_formatter)
+queue_handler.setLevel(logging.DEBUG)
+
+FMOCC_LOGGER = logging.getLogger("fmocc")
+FMOCC_LOGGER.setLevel(logging.DEBUG)
+FMOCC_LOGGER.addHandler(console_handler)
+FMOCC_LOGGER.addHandler(file_handler)
+FMOCC_LOGGER.addHandler(queue_handler)
+FMOCC_LOGGER.propagate = False
+class HelperFunction:
+    @staticmethod
+    def clear_pycache(directory="."):
+        deleted_count = 0
+        if not os.path.exists(directory):
+            FMOCC_LOGGER.error(f"Directory {directory} does not exist.")
+            return deleted_count
+        try:
+            for root, dirs, _ in os.walk(directory, topdown=False):
+                for dir_name in dirs:
+                    if dir_name == "__pycache__":
+                        pycache_path = os.path.join(root, dir_name)
+                        FMOCC_LOGGER.info(f"Deleting __pycache__ directory: {pycache_path}")
+                        try:
+                            shutil.rmtree(pycache_path)
+                            deleted_count += 1
+                        except Exception as e:
+                            FMOCC_LOGGER.warning(f"Failed to delete {pycache_path}: {str(e)}")
+            FMOCC_LOGGER.info(f"Total __pycache__ directories deleted: {deleted_count}")
+            return deleted_count
+        except Exception as e:
+            FMOCC_LOGGER.error(f"Error while clearing __pycache__ directories in {directory}: {str(e)}")
+            return deleted_count
 class Symmetrizer:
     def symmetrize(self, occ, virt, R_ijab):
         R_ijab_new = np.zeros((occ, occ, virt, virt))

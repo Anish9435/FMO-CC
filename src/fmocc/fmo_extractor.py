@@ -3,11 +3,11 @@ import subprocess
 import copy as cp
 import glob
 import os
-from .utils import get_logger
+from .utils import FMOCC_LOGGER
 
 class FMOExtractor:
     def __init__(self, gamess_out, gamess_2eint, outfile1, outfile2, outfile3, tempfile, tempfile2):
-        self.logger = get_logger(__name__)
+        self.logger = FMOCC_LOGGER
         if not os.path.exists(gamess_out):
             raise FileNotFoundError(f"GAMESS output file {gamess_out} not found")
         if not os.path.exists(gamess_2eint):

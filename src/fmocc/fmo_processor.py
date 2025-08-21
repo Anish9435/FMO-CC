@@ -4,11 +4,11 @@ from .fmo_config import FMOConfig
 from .fmo_extractor import FMOExtractor
 from .fmo_calculator import FMOCalculator
 from itertools import combinations
-from .utils import get_logger
+from .utils import FMOCC_LOGGER
 
 class FMOProcessor:
     def __init__(self, input_file):
-        self.logger = get_logger(__name__)
+        self.logger = FMOCC_LOGGER
         self.config = FMOConfig(input_file)
         gamess_out = f"{self.config.filename}.dat"
         gamess_2eint = f"{self.config.filename}_2eint.dat"

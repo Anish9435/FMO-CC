@@ -2,11 +2,11 @@ from ast import pattern
 import json
 from itertools import combinations
 from typing import List, Dict, Any
-from .utils import get_logger
+from .utils import FMOCC_LOGGER
 
 class FMOConfig:
     def __init__(self, input_file: str):
-        self.logger = get_logger(__name__)
+        self.logger = FMOCC_LOGGER
         try:
             with open(input_file) as f:
                 data = json.load(f)

@@ -1,30 +1,21 @@
 from multiprocessing import Pool
 import numpy as np
 import copy as cp
-import time
-
-from sqlalchemy import Tuple
 from .diagrams import DiagramBuilder
-from .utils import Symmetrizer, AmplitudeUpdater, get_logger
+from .utils import Symmetrizer, AmplitudeUpdater, FMOCC_LOGGER
 
 class CCParallel:
     def __init__(self):
-        self.logger = get_logger(__name__)
+        self.logger = FMOCC_LOGGER
         self.diagram_builder = DiagramBuilder()
         self.amplitude_updater = AmplitudeUpdater()
         self.symmetrizer = Symmetrizer()
 
     def energy_ccd(self, occ, nao, t2, twoelecint_mo):
-        if t2.shape != (occ, occ, nao - occ, nao - occ):
-            self.logger.error(f"Invalid t2 shape: {t2.shape}")
-            raise ValueError(f"Invalid t2 shape")
         E_ccd = 2 * np.einsum('ijab,ijab', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao]) - np.einsum('ijab,ijba', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao])
         return E_ccd
 
     def energy_ccsd(self, occ, nao, t1, t2, twoelecint_mo):
-        if t1.shape != (occ, nao - occ) or t2.shape != (occ, occ, nao - occ, nao - occ):
-            self.logger.error(f"Invalid shapes: t1={t1.shape}, t2={t2.shape}")
-            raise ValueError(f"Invalid input shapes")
         E_ccd = self.energy_ccd(occ, nao, t2, twoelecint_mo)
         E_ccd += 2 * np.einsum('ijab,ia,jb', twoelecint_mo[:occ, :occ, occ:nao, occ:nao], t1, t1) - np.einsum('ijab,ib,ja', twoelecint_mo[:occ, :occ, occ:nao, occ:nao], t1, t1)
         return E_ccd
@@ -76,8 +67,8 @@ class CCParallel:
                 R_ijab8 = R_ijab8_temp.get()
                 R_ijab9 = R_ijab9_temp.get()
 
-                R_ia = (R_ia1)#+R_ia2+R_ia10)
-                R_ijab = (R_ijab1)#+R_ijab2+R_ijab3+R_ijab4+R_ijab5+R_ijab6+R_ijab7+R_ijab8+R_ijab9+R_ijab10)
+                R_ia = (R_ia1+R_ia2+R_ia10)
+                R_ijab = (R_ijab1+R_ijab2+R_ijab3+R_ijab4+R_ijab5+R_ijab6+R_ijab7+R_ijab8+R_ijab9+R_ijab10)
 
                 R_ijab = self.symmetrizer.symmetrize(occ,virt,R_ijab)
                 eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia,R_ijab,t1,t2,D1,D2)

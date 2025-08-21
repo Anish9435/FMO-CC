@@ -2,11 +2,11 @@ import numpy as np
 import gc
 import copy as cp
 from typing import Tuple
-from .utils import get_logger
+from .utils import FMOCC_LOGGER
 
 class MP2Calculator:
     def __init__(self):
-        self.logger = get_logger(__name__)
+        self.logger = FMOCC_LOGGER
 
     def occ_frozen(self, occ, nmo, nfo, twoelecint_mo, Fock_mo, hf_mo_E):
         occ -= nfo

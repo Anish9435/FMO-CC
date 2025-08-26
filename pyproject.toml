@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [project.scripts]
-run-fmocc = "Scripts.run_fmo_cc:main"
+run_fmo_cc = "fmocc.__main__:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

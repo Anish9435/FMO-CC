@@ -41,15 +41,32 @@ The `setup.sh` script will configure dependencies, validate the environment and 
 
 ## Quick Start
 
-Run the codebase using the input file:
+Run the codebase using the launcher script:
 
 ```bash
+# Default input file (input.json)
 python3 path/to/FMO_CC/Scripts/run_fmo_cc.py
+
+#custom input file
+python3 path/to/FMO_CC/Scripts/run_fmo_cc.py -c my_config.json
 ```
-or one can simply run:
+or one can simply run as python module:
 
 ```bash
+# Default input file (input.json)
+python -m fmocc
+
+#custom input file
+python -m fmocc -c my_config.json
+```
+or, run via the console script (after the pip install):
+
+```bash
+# Default input file (input.json)
 run_fmo_cc
+
+#custom input file
+run_fmo_cc -c my_config.json
 ```
 
 ## Project Structure

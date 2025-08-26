@@ -1,3 +1,4 @@
+import os
 import time
 import tempfile
 from .fmo_config import FMOConfig
@@ -7,11 +8,14 @@ from itertools import combinations
 from .utils import FMOCC_LOGGER
 
 class FMOProcessor:
-    def __init__(self, input_file):
+    def __init__(self, input_file, base_dir=None):
         self.logger = FMOCC_LOGGER
         self.config = FMOConfig(input_file)
-        gamess_out = f"{self.config.filename}.dat"
-        gamess_2eint = f"{self.config.filename}_2eint.dat"
+        if base_dir is None:
+            base_dir = os.path.dirname(os.path.abspath(input_file))
+        self.base_dir = base_dir
+        gamess_out = os.path.join(self.base_dir, f"{self.config.filename}.dat")
+        gamess_2eint = os.path.join(self.base_dir, f"{self.config.filename}_2eint.dat")
         coeff_file = getattr(self.config, 'coeff_file', 'coeff.txt')
         hamiltonian_file = getattr(self.config, 'hamiltonian_file', 'hamiltonian.txt')
         twoelecint_file = getattr(self.config, 'twoelecint_file', 'twoelecint.txt')

@@ -5,19 +5,15 @@ from fmocc.fmo_processor import FMOProcessor
 from fmocc.utils import HelperFunction, FMOCC_LOGGER
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run FMO-CC calculations with a specified configuration file."
-    )
-    parser.add_argument(
-        "-c", "--config",
-        type=str,
-        default="input.json",
-        help="Path to the input JSON configuration file (default: input.json)."
-    )
+    parser = argparse.ArgumentParser(description="Run FMO-CC calculation")
+    parser.add_argument("-c", "--config", default="input.json", help="Path to input JSON configuration")
     args = parser.parse_args()
+
+    config_file = os.path.abspath(args.config)
+    config_dir = os.path.dirname(config_file)
     logger = FMOCC_LOGGER
     try:
-        processor = FMOProcessor(args.config)
+        processor = FMOProcessor(args.config, base_dir=config_dir)
         E_cc, E_cc_tot = processor.run()
         logger.info(f"CC Correlation Energy: {E_cc:.9f}")
         logger.info(f"Total CC Energy: {E_cc_tot:.9f}")

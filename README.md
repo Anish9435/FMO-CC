@@ -35,9 +35,16 @@ and designed with a robust error handling and configurability.
 ```bash
 git clone https://github.com/Anish9435/FMO-CC.git
 cd FMO-CC
-./setup.sh
+bash setup.sh
 ```
 The `setup.sh` script will configure dependencies, validate the environment and prepare the pipeline for use
+
+Set up the virtual environment via:
+
+```bash
+source fmocc_env/bin/activate
+```
+And then follow the `Quick start` section to run the scripts
 
 ## Quick Start
 

@@ -1,7 +1,5 @@
 import numpy as np
 import copy as cp
-import gc
-from multiprocessing import Pool
 from .utils import FMOCC_LOGGER
 
 class DiagramBuilder:

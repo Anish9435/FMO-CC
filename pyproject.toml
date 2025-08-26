@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fmo-cc"
+version = "0.1.0"
+description = "Fragment Molecular Orbital Coupled Cluster (FMO-CC) calculation package"
+readme = "README.md"
+authors = [
+    { name = "Anish Chakraborty", email = "anish.saheb41@gmail.com" }
+]
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.21",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+run-fmocc = "Scripts.run_fmo_cc:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["fmocc*"]
+
+[tool.setuptools.package-data]
+"fmocc" = ["*.json"]
+
+[tool.setuptools.data-files]
+"fmocc/data" = ["input.json", "Scripts/run_gamess.sh", "Scripts/twoeint_process.sh"]

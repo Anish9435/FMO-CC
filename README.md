@@ -29,50 +29,53 @@ and designed with a robust error handling and configurability.
 
 ---
 
-## Dependencies
-
-### Runtime
-
- - Python ≥ 3.8  
- - NumPy = 1.26.4  
- - Standard-library modules: `multiprocessing`, `json`, `logging`, `copy`, `gc`, `itertools`, `subprocess`, `glob`, `os`
-
-### External Software
-
- - **GAMESS** (to generate `.dat` and `_2eint.dat` files)
- - **Bash** (to run `run_gamess.sh`, `twoeint_process.sh`)
-
----
 
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Anish9435/FMO-CC.git
 cd FMO-CC
+./setup.sh
+```
+The `setup.sh` script will configure dependencies, validate the environment and prepare the pipeline for use
 
-# Install Python dependency
-pip install numpy
+## Quick Start
+
+Run the codebase using the input file:
+
+```bash
+python3 path/to/FMO_CC/Scripts/run_fmo_cc.py
+```
+or one can simply run:
+
+```bash
+run_fmo_cc
 ```
 
 ## Project Structure
 
 ```text
 FMO-CC/
-├── input.json
-├── README.md
-├── run_fmo_cc.py
-├── Scripts/
-│   ├── run_gamess.sh
-│   └── twoeint_process.sh
-└── src/
-    └── fmocc/
-        ├── __init__.py
-        ├── fmo_calculator.py
-        ├── fmo_config.py
-        ├── fmo_extractor.py
-        ├── fmo_processor.py
-        ├── main_parallel.py
-        ├── MP2.py
-        ├── diagrams.py
-        └── utils.py
+├── src/                             # Source root (used for editable install)
+│   └── fmocc/                       # Main Python package
+│       ├── __init__.py
+│       ├── __main__.py              # Enables `python -m fmocc` execution
+│       ├── fmo_calculator.py        # Core FMO-CC energy calculations
+│       ├── fmo_config.py            # Configuration and parameter management
+│       ├── fmo_extractor.py         # Data extraction from GAMESS outputs
+│       ├── fmo_processor.py         # High-level FMO-CC workflow orchestration
+│       ├── main_parallel.py         # Parallelization logic for CC computations
+│       ├── MP2.py                   # MP2-specific methods and corrections
+│       ├── diagrams.py              # Diagrammatic CC expansions
+│       └── utils.py                 # Logging, helpers, and cache management
+│
+├── Scripts/                         # CLI scripts and execution helpers
+│   ├── run_fmo_cc.py                # Main launcher for FMO-CC calculations
+│   ├── run_gamess.sh                # Wrapper script for GAMESS runs
+│   └── twoeint_process.sh           # Post-processing for two-electron integrals
+│
+├── pyproject.toml                   # Packaging config (PEP 621 / pip install)
+├── input.json                       # Example input file for FMO-CC
+├── setup.sh                         # Script to automate installation
+└── README.md                        # Project documentation and usage guide
 ```

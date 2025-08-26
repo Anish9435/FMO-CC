@@ -35,7 +35,8 @@ and designed with a robust error handling and configurability.
 ```bash
 git clone https://github.com/Anish9435/FMO-CC.git
 cd FMO-CC
-bash setup.sh
+chmod +x setup.sh
+./setup.sh
 ```
 The `setup.sh` script will configure dependencies, validate the environment and prepare the pipeline for use
 

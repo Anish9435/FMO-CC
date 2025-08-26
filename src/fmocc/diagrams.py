@@ -152,22 +152,20 @@ class DiagramBuilder:
         return R_ia11
 
     def So_int_diagrams(self,occ,o_act,nao,So,t2,twoelecint_mo):
-        II_oo = np.zeros((occ, occ))
+        II_oo = np.zeros((occ,occ)) 
         II_oo[:,occ-o_act:occ] += -2*0.25*np.einsum('ciml,mlcv->iv',twoelecint_mo[occ:nao,:occ,:occ,:occ],So) + 0.25*np.einsum('diml,lmdv->iv',twoelecint_mo[occ:nao,:occ,:occ,:occ],So)
-
-        R_ijab = -np.einsum('ik,kjab->ijab',II_oo,t2)
-
+  
+        R_ijab = -np.einsum('ik,kjab->ijab',II_oo,t2)   
         return R_ijab,II_oo
 
-    def Sv_int_diagrams(self, occ, virt, v_act, nao, Sv, t2, twoelecint_mo):
-        II_vv = np.zeros((virt, virt))
+    def Sv_int_diagrams(self,occ,virt,v_act,nao,Sv,t2,twoelecint_mo):
+        II_vv = np.zeros((virt,virt))
         II_vv[:v_act,:] += 2*0.25*np.einsum('dema,mude->ua',twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv) - 0.25*np.einsum('dema,mued->ua',twoelecint_mo[occ:nao,occ:nao,:occ,occ:nao],Sv)
-
-        R_ijab = np.einsum('ca,ijcb->ijab',II_vv,t2)
-
+  
+        R_ijab = np.einsum('ca,ijcb->ijab',II_vv,t2)   
         return R_ijab,II_vv
     
-    def Sv_diagrams(self, occ,v_act,nao,Sv,t1,t2,Fock_mo,twoelecint_mo):
+    def Sv_diagrams(self,occ,v_act,nao,Sv,t1,t2,Fock_mo,twoelecint_mo):
         R_iuab = cp.deepcopy(twoelecint_mo[:occ,occ:occ+v_act,occ:nao,occ:nao])
         R_iuab += -np.einsum('ik,kuab->iuab',Fock_mo[:occ,:occ],Sv)
         R_iuab += np.einsum('da,iudb->iuab',Fock_mo[occ:nao,occ:nao],Sv)
@@ -202,19 +200,16 @@ class DiagramBuilder:
         R_ijav += -np.einsum('jdla,ildv->ijav',twoelecint_mo[:occ,occ:nao,:occ,occ:nao],So)
         R_ijav += -np.einsum('idlv,ljad->ijav',twoelecint_mo[:occ,occ:nao,:occ,occ-o_act:occ],t2)
         #R_ijav += np.einsum('ijax,xv->ijav',So,II_oo[occ-o_act:occ,occ-o_act:occ])     #### -(So(H.So)_c)_c term
-
         return R_ijav
     
     def T1_contribution_Sv(self,occ,nao,v_act,t1,twoelecint_mo):
         R_iuab = -np.einsum('uika,kb->iuab',twoelecint_mo[occ:occ+v_act,:occ,:occ,occ:nao],t1)
         R_iuab += np.einsum('duab,id->iuab',twoelecint_mo[occ:nao,occ:occ+v_act,occ:nao,occ:nao],t1)
         R_iuab += -np.einsum('iukb,ka->iuab',twoelecint_mo[:occ,occ:occ+v_act,:occ,occ:nao],t1)
-
         return R_iuab
 
     def T1_contribution_So(occ,nao,o_act,t1,twoelecint_mo):
         R_ijav = np.einsum('diva,jd->ijav',twoelecint_mo[occ:nao,:occ,occ-o_act:occ,occ:nao],t1)
         R_ijav += np.einsum('djav,id->ijav',twoelecint_mo[occ:nao,:occ,occ:nao,occ-o_act:occ],t1)
         R_ijav += -np.einsum('ijkv,ka->ijav',twoelecint_mo[:occ,:occ,:occ,occ-o_act:occ],t1)
-
         return R_ijav

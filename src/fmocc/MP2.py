@@ -1,7 +1,6 @@
-import numpy as np
 import gc
+import numpy as np
 import copy as cp
-from typing import Tuple
 from .utils import FMOCC_LOGGER
 
 class MP2Calculator:
@@ -57,10 +56,10 @@ class MP2Calculator:
         self.logger.debug("Computed initial t2 guess")
         return t2, D2
 
-    def guess_so(self, occ, virt, o_act, hf_mo_E, twoelecint_mo):
-        if o_act > occ:
-            self.logger.error(f"Invalid o_act: {o_act}, must be <= {occ}")
-            raise ValueError(f"Invalid o_act: {o_act}")
+    def guess_so(self, occ, virt, nmo, o_act, hf_mo_E, twoelecint_mo):
+        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo) or hf_mo_E.shape != (nmo,):
+            self.logger.error(f"Invalid shapes: twoelecint_mo={twoelecint_mo.shape}, hf_mo_E={hf_mo_E.shape}")
+            raise ValueError(f"Invalid input shapes")
         Do = np.zeros((occ, occ, virt, o_act))
         So = np.zeros((occ, occ, virt, o_act))
         for i in range(occ):
@@ -69,13 +68,13 @@ class MP2Calculator:
                     for k in range(occ - o_act, occ):
                         Do[i, j, a, k - occ + o_act] = hf_mo_E[i] + hf_mo_E[j] - hf_mo_E[a + occ] + hf_mo_E[k]
                         So[i, j, a, k - occ + o_act] = twoelecint_mo[i, j, a + occ, k] / Do[i, j, a, k - occ + o_act]
-        self.logger.debug("Computed initial So guess")
+                        #self.logger.info(f"Do: {i,j,a,k-occ+o_act,Do[i,j,a,k-occ+o_act]}")
         return So, Do
 
-    def guess_sv(self, occ, virt, v_act, hf_mo_E, twoelecint_mo):
-        if v_act > virt:
-            self.logger.error(f"Invalid v_act: {v_act}, must be <= {virt}")
-            raise ValueError(f"Invalid v_act: {v_act}")
+    def guess_sv(self, occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo):
+        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo) or hf_mo_E.shape != (nmo,):
+            self.logger.error(f"Invalid shapes: twoelecint_mo={twoelecint_mo.shape}, hf_mo_E={hf_mo_E.shape}")
+            raise ValueError(f"Invalid input shapes")
         Dv = np.zeros((occ, v_act, virt, virt))
         Sv = np.zeros((occ, v_act, virt, virt))
         for i in range(occ):
@@ -84,7 +83,7 @@ class MP2Calculator:
                     for b in range(virt):
                         Dv[i, c, a, b] = hf_mo_E[i] - hf_mo_E[c + occ] - hf_mo_E[a + occ] - hf_mo_E[b + occ]
                         Sv[i, c, a, b] = twoelecint_mo[i, c + occ, a + occ, b + occ] / Dv[i, c, a, b]
-        self.logger.debug("Computed initial Sv guess")
+
         return Sv, Dv
 
     def MP2_energy(self, occ, nao, t2, twoelecint_mo, E_hf):

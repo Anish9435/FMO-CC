@@ -1,6 +1,4 @@
 import numpy as np
-import subprocess
-from itertools import combinations
 from .MP2 import MP2Calculator
 from .main_parallel import CCParallel
 from .utils import FMOCC_LOGGER
@@ -63,9 +61,10 @@ class FMOCalculator:
 
         t2, D2 = self.mp2_calc.guess_t2(occ, virt, nmo, hf_mo_E, twoelecint_mo)
         t1, D1 = self.mp2_calc.guess_t1(occ, virt, nmo, hf_mo_E, Fock_mo)
-        So, Do = self.mp2_calc.guess_so(occ, virt, o_act, hf_mo_E, twoelecint_mo)
-        Sv, Dv = self.mp2_calc.guess_sv(occ, virt, v_act, hf_mo_E, twoelecint_mo)
+        So, Do = self.mp2_calc.guess_so(occ, virt, nmo, o_act, hf_mo_E, twoelecint_mo)
+        Sv, Dv = self.mp2_calc.guess_sv(occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo)
         E_mp2, E_mp2_tot = self.mp2_calc.MP2_energy(occ, nao, t2, twoelecint_mo, Erhf)
+        self.logger.info(f"occ: {occ}, virt: {virt}, o_act: {o_act}, v_act: {v_act}")
         self.logger.info(f"Monomer {ifrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 
         E_ccd, _ = self.cc_parallel.cc_calc(occ, virt, o_act, v_act, nmo, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, self.config.method, self.config.niter, E_mp2_tot, self.config.conv)
@@ -110,12 +109,13 @@ class FMOCalculator:
 
         t2, D2 = self.mp2_calc.guess_t2(occ, virt, nmo, hf_mo_E, twoelecint_mo)
         t1, D1 = self.mp2_calc.guess_t1(occ, virt, nmo, hf_mo_E, Fock_mo)
-        So, Do = self.mp2_calc.guess_so(occ, virt, o_act, hf_mo_E, twoelecint_mo)
-        Sv, Dv = self.mp2_calc.guess_sv(occ, virt, v_act, hf_mo_E, twoelecint_mo)
+        So, Do = self.mp2_calc.guess_so(occ, virt, nmo, o_act, hf_mo_E, twoelecint_mo)
+        Sv, Dv = self.mp2_calc.guess_sv(occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo)
         E_mp2, E_mp2_tot = self.mp2_calc.MP2_energy(occ, nao, t2, twoelecint_mo, Erhf)
+        self.logger.info(f"Monomer Orbital energies: {hf_mo_E}")
         self.logger.info(f"Dimer {ifrag, jfrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 
         E_ccd, _ = self.cc_parallel.cc_calc(occ, virt, o_act, v_act, nmo, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, self.config.method, self.config.niter, E_mp2_tot, self.config.conv)
-        self.logger.info(f"Dimer {comb_idx}: CC correlation energy: {E_ccd}")
+        self.logger.info(f"Dimer {ifrag, jfrag}: CC correlation energy: {E_ccd}")
         self.extractor.cleanup()
         return Erhf, E_mp2, E_ccd, lnum1, lnum2

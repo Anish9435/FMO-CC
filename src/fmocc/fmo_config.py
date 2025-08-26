@@ -98,14 +98,23 @@ class FMOConfig:
         self.virt_mono = [nmo - occ for nmo, occ in zip(self.nmo_mono, self.occ_mono)]
         self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
         self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
-        self.o_act_mono = [self.o_act] * self.nfrag
-        self.v_act_mono = [self.v_act] * self.nfrag
-        self.o_act_dimer = [self.o_act * 2] * len(self.nao_dimer)
-        self.v_act_dimer = [self.v_act * 2] * len(self.nao_dimer)
-        self.nfo_mono = [self.nfo] * self.nfrag
-        self.nfv_mono = [self.nfv] * self.nfrag
-        self.nfo_dimer = [self.nfo * 2] * len(self.nao_dimer)
-        self.nfv_dimer = [self.nfv * 2] * len(self.nao_dimer)
+        nmer: List[int] = []
+        if self.fragment_index:
+            if len(self.fragment_index) != self.nfrag:
+                self.logger.error(f"Mismatch between nfrag ({self.nfrag}) and len(fragment_index) ({len(self.fragment_index)})")
+                raise ValueError(f"Mismatch between nfrag and fragment_index")
+            natoms = [max(frag) - min(frag) + 1 for frag in self.fragment_index]
+            nmer = [int(natoms_i / self.frag_atom) for natoms_i in natoms]
+        else:
+            nmer = [1] * self.nfrag
+        self.o_act_mono = [self.o_act * nmer_i for nmer_i in nmer]
+        self.v_act_mono = [self.v_act * nmer_i for nmer_i in nmer]
+        self.nfo_mono = [self.nfo * nmer_i for nmer_i in nmer]
+        self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]
+        self.o_act_dimer = [sum(combo) for combo in combinations(self.o_act_mono, 2)]
+        self.v_act_dimer = [sum(combo) for combo in combinations(self.v_act_mono, 2)]
+        self.nfo_dimer = [sum(combo) for combo in combinations(self.nfo_mono, 2)]
+        self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}")  # CHANGE: Logging update
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
         self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")

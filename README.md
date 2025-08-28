@@ -81,7 +81,7 @@ run_fmo_cc -c my_config.json
 ## Configuration file input options
 
 ```text
-| Flag / Key              | Description                                                                 |
+|      Flag / Key         |                          Description                                        |
 |-------------------------|-----------------------------------------------------------------------------|
 | `method`                | Correlated method: `ICCSD`, `ICCSD-PT`, `CCSD`                              |
 | `conv`                  | Convergence threshold for CC iterations (e.g., `1e-7`)                      |

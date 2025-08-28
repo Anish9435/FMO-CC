@@ -12,6 +12,7 @@ and designed with a robust error handling and configurability.
 ### **Quantum Chemistry Methods**
  - FMO-based RHF, MP2, and CC (CCSD, ICCSD, ICCSD-PT) calculations
  - Support for frozen occupied/virtual orbital simulations
+ - Supports both one-body FMO (FMO1) and two-body FMO (FMO2) calculations
 
 ### **Parallelization**
  - Multiprocessing for parallel CC iterations
@@ -76,6 +77,33 @@ run_fmo_cc
 #custom input file
 run_fmo_cc -c my_config.json
 ```
+
+## Configuration file input options
+
+```text
+| Flag / Key              | Description                                                                 |
+|-------------------------|-----------------------------------------------------------------------------|
+| `method`                | Correlated method: `ICCSD`, `ICCSD-PT`, `CCSD`                              |
+| `conv`                  | Convergence threshold for CC iterations (e.g., `1e-7`)                      |
+| `occ_act`               | Number of active occupied orbitals                                          |
+| `virt_act`              | Number of active virtual orbitals                                           |
+| `nfo`                   | Number of frozen occupied orbitals                                          |
+| `nfv`                   | Number of frozen virtual orbitals                                           |
+| `basis_set`             | Basis set to use (e.g., `6-21g`, `cc-pVDZ`, etc.)                           |
+| `niter`                 | Maximum number of CC iterations                                             |
+| `frag_atom`             | Number of atoms per fragment (used in noncovalent fragmentation mode)       |
+| `elements`              | List of atomic numbers present in the system                                |
+| `atom_pattern`          | Atom sequence pattern defining fragments                                    |
+| `filename`              | Base filename for GAMESS outputs (`.dat` and `_2eint.dat`)                  |
+| `fragment_index`        | Explicit fragment index ranges (for custom/nonstandard fragmentation)       |
+| `icharge`               | List of charges for each fragment                                           |
+| `integral_transform`    | Mode for integral transformation: `incore` or `disk`                        |
+| `fmo_type`              | Fragment Molecular Orbital type: `FMO1`, `FMO2`, etc.                       |
+| `molecule`              | Explicit dictionary of fragments with atom coordinates and element numbers  |
+```
+**Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
+
+**Note:** Automation for the covalently bonded systems is currently underway, this works well for the non-calently bonded systems
 
 ## Project Structure
 

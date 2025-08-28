@@ -85,14 +85,15 @@ class FMOProcessor:
         dimer_rhf, dimer_mp2_corr, dimer_cc_corr = [], [], []
         lnum1, lnum2 = self.lnum1, self.lnum2
         
-        seq = [i for i in range(self.config.nfrag)]
-        comb = list(combinations(seq, 2))
-        for idx, (i, j) in enumerate(comb):
-            Erhf, E_mp2, E_ccd, lnum1, lnum2 = self.calculator.compute_dimer(idx, i, j, lnum1, lnum2)
-            dimer_rhf.append(Erhf)
-            dimer_mp2_corr.append(E_mp2)
-            dimer_cc_corr.append(E_ccd)
-            self.logger.info("Completed dimer calculation")
+        if self.config.fmo_type == "FMO2":
+            seq = [i for i in range(self.config.nfrag)]
+            comb = list(combinations(seq, 2))
+            for idx, (i, j) in enumerate(comb):
+                Erhf, E_mp2, E_ccd, lnum1, lnum2 = self.calculator.compute_dimer(idx, i, j, lnum1, lnum2)
+                dimer_rhf.append(Erhf)
+                dimer_mp2_corr.append(E_mp2)
+                dimer_cc_corr.append(E_ccd)
+                self.logger.info("Completed dimer calculation")
 
         for i in range(self.config.nfrag):
             Erhf, E_mp2, E_ccd, lnum1, lnum2 = self.calculator.compute_monomer(i, lnum1, lnum2)
@@ -102,9 +103,14 @@ class FMOProcessor:
             self.logger.info("Completed monomer calculation")
 
         FMO_RHF = self.extractor.get_tot_rhf()
-        fmo_mp2_corr = sum(dimer_mp2_corr) - (self.config.nfrag - 2) * sum(mono_mp2_corr)
+        if self.config.fmo_type == "FMO2":
+            fmo_mp2_corr = sum(dimer_mp2_corr) - (self.config.nfrag - 2) * sum(mono_mp2_corr)
+            fmo_cc_corr = sum(dimer_cc_corr) - (self.config.nfrag - 2) * sum(mono_cc_corr)
+        else:
+            fmo_mp2_corr = sum(mono_mp2_corr)
+            fmo_cc_corr = sum(mono_cc_corr)
+        
         Tot_MP2 = FMO_RHF + fmo_mp2_corr
-        fmo_cc_corr = sum(dimer_cc_corr) - (self.config.nfrag - 2) * sum(mono_cc_corr)
         Tot_CC = FMO_RHF + fmo_cc_corr
 
         self.logger.info(f"Total RHF energy: {FMO_RHF}")

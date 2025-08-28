@@ -112,7 +112,7 @@ class FMOConfig:
             self.logger.error(f"Error reading {input_file}: {e}")
             raise ValueError(f"Error reading {input_file}: {e}")
         self.data = data
-        required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge"]
+        required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge", "fmo_type"]
         for key in required_keys:
             if key not in data:
                 self.logger.error(f"Missing required key in JSON: {key}")
@@ -147,6 +147,11 @@ class FMOConfig:
         if not isinstance(self.icharge, list) or len(self.icharge) == 0:
             self.logger.error("icharge must be a non-empty list")
             raise ValueError("icharge must be a non-empty list")
+    
+        self.fmo_type = data["fmo_type"]
+        if self.fmo_type not in ["FMO1", "FMO2"]:
+            self.logger.error(f"Invalid fmo_type: {self.fmo_type}. Must be 'FMO1' or 'FMO2'")
+            raise ValueError(f"Invalid fmo_type: {self.fmo_type}")
         
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)

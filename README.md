@@ -103,7 +103,7 @@ run_fmo_cc -c my_config.json
 ```
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
-**Note:** Automation for the covalently bonded systems is currently underway, this works well for the non-calently bonded systems
+**Note:** Automation for the covalently bonded systems is currently underway. The current implementation works well for the non-covalently bonded systems
 
 ## Project Structure
 

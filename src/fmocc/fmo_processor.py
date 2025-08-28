@@ -8,6 +8,36 @@ from itertools import combinations
 from .utils import FMOCC_LOGGER
 
 class FMOProcessor:
+    """Fragment Molecular Orbital (FMO) processor for Coupled cluster (CC) calculations.
+
+    This class orchestrates the FMO calculation process, handling initialization,
+    fragment extraction, and energy computations for monomers and dimers.
+
+    Parameters
+    ----------
+    input_file : str
+        Path to the input configuration file.
+    base_dir : str, optional
+        Base directory for input/output files. If None, defaults to the directory
+        of the input file.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        Logger instance for FMO calculations.
+    config : FMOConfig
+        Configuration object for FMO calculations.
+    base_dir : str
+        Directory for file operations.
+    extractor : FMOExtractor
+        Object for extracting data from GAMESS output files.
+    lnum1 : int
+        Number of lines in the GAMESS output file.
+    lnum2 : int
+        Number of lines in the GAMESS 2e integral file.
+    calculator : FMOCalculator
+        Object for performing FMO energy calculations.
+    """
     def __init__(self, input_file, base_dir=None):
         self.logger = FMOCC_LOGGER
         self.config = FMOConfig(input_file)
@@ -34,6 +64,22 @@ class FMOProcessor:
         self.logger.info(f"Initialized FMOProcessor with {nfrag} fragments and nao_mono: {nao_mono}")
 
     def run(self):
+        """Execute the FMO calculation for monomers and dimers.
+
+        Computes RHF, MP2, and CC correlation energies for monomers and dimers,
+        and aggregates results to obtain total energies.
+
+        Returns
+        -------
+        tuple[float, float]
+            A tuple containing the total CC correlation energy and the total CC energy.
+
+        Notes
+        -----
+        - Iterates over all dimer pairs and monomers to compute energies.
+        - Logs the progress and results using the configured logger.
+        - Measures and logs the total execution time.
+        """
         start = time.time()
         mono_rhf, mono_mp2_corr, mono_cc_corr = [], [], []
         dimer_rhf, dimer_mp2_corr, dimer_cc_corr = [], [], []

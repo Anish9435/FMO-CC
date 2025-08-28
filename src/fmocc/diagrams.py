@@ -1,5 +1,5 @@
-import numpy as np
 import copy as cp
+import numpy as np
 from .utils import FMOCC_LOGGER
 
 class DiagramBuilder:

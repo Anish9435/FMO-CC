@@ -4,6 +4,35 @@ from .main_parallel import CCParallel
 from .utils import FMOCC_LOGGER
 
 class FMOCalculator:
+    """Calculator for Fragment Molecular Orbital (FMO) energy computations.
+
+    Handles the computation of RHF, MP2, and CC energies for monomers and dimers,
+    including transformations of two-electron integrals.
+
+    Parameters
+    ----------
+    config : FMOConfig
+        Configuration object for FMO calculations.
+    extractor : FMOExtractor
+        Object for extracting data from GAMESS output files.
+    processor : FMOProcessor
+        Processor object managing the FMO calculation workflow.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        Logger instance for FMO calculations.
+    config : FMOConfig
+        Configuration object for FMO calculations.
+    extractor : FMOExtractor
+        Object for extracting data from GAMESS output files.
+    processor : FMOProcessor
+        Processor object managing the FMO calculation workflow.
+    mp2_calc : MP2Calculator
+        Object for MP2 energy calculations.
+    cc_parallel : CCParallel
+        Object for coupled-cluster calculations.
+    """
     def __init__(self, config, extractor, processor):
         self.logger = FMOCC_LOGGER
         self.config = config
@@ -13,6 +42,25 @@ class FMOCalculator:
         self.cc_parallel = CCParallel()
 
     def _transform_2eint(self, coeff, twoeint):
+        """Transform two-electron integrals from AO to MO basis.
+
+        Parameters
+        ----------
+        coeff : np.ndarray
+            Coefficient matrix for basis transformation.
+        twoeint : np.ndarray
+            Two-electron integrals in AO basis.
+
+        Returns
+        -------
+        np.ndarray
+            Two-electron integrals in MO basis.
+
+        Raises
+        ------
+        RuntimeError
+            If an error occurs during the transformation process.
+        """
         try:
             twoeint_1 = np.einsum('zs,wxyz->wxys', coeff, twoeint)
             twoeint_2 = np.einsum('yr,wxys->wxrs', coeff, twoeint_1)
@@ -25,6 +73,23 @@ class FMOCalculator:
             raise RuntimeError(f"Error transforming 2e integrals: {e}")
 
     def compute_monomer(self, i, lnum1, lnum2):
+        """Compute energies for a single monomer.
+
+        Parameters
+        ----------
+        i : int
+            Index of the monomer.
+        lnum1 : int
+            Line number index for GAMESS output file.
+        lnum2 : int
+            Line number index for GAMESS 2e integral file.
+
+        Returns
+        -------
+        tuple[float, float, float, int, int]
+            A tuple containing RHF energy, MP2 correlation energy, CC correlation
+            energy, updated lnum1, and updated lnum2.
+        """
         nao = self.config.nao_mono[i]
         nmo = self.config.nmo_mono[i]
         occ = self.config.occ_mono[i]
@@ -65,6 +130,7 @@ class FMOCalculator:
         Sv, Dv = self.mp2_calc.guess_sv(occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo)
         E_mp2, E_mp2_tot = self.mp2_calc.MP2_energy(occ, nao, t2, twoelecint_mo, Erhf)
         self.logger.info(f"occ: {occ}, virt: {virt}, o_act: {o_act}, v_act: {v_act}")
+        self.logger.info(f"t1 shape: {t1.shape}, t2 shape: {t2.shape}, So shape: {So.shape}, Sv shape: {Sv.shape}")
         self.logger.info(f"Monomer {ifrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 
         E_ccd, _ = self.cc_parallel.cc_calc(occ, virt, o_act, v_act, nmo, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, self.config.method, self.config.niter, E_mp2_tot, self.config.conv)
@@ -73,6 +139,27 @@ class FMOCalculator:
         return Erhf, E_mp2, E_ccd, lnum1, lnum2
 
     def compute_dimer(self, comb_idx, i, j, lnum1, lnum2):
+        """Compute energies for a dimer pair.
+
+        Parameters
+        ----------
+        comb_idx : int
+            Index of the dimer combination.
+        i : int
+            Index of the first monomer in the dimer.
+        j : int
+            Index of the second monomer in the dimer.
+        lnum1 : int
+            Line number index for GAMESS output file.
+        lnum2 : int
+            Line number index for GAMESS 2e integral file.
+
+        Returns
+        -------
+        tuple[float, float, float, int, int]
+            A tuple containing RHF energy, MP2 correlation energy, CC correlation
+            energy, updated lnum1, and updated lnum2.
+        """
         nao = self.config.nao_dimer[i]
         nmo = self.config.nmo_dimer[i]
         occ = self.config.occ_dimer[i]
@@ -113,6 +200,7 @@ class FMOCalculator:
         Sv, Dv = self.mp2_calc.guess_sv(occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo)
         E_mp2, E_mp2_tot = self.mp2_calc.MP2_energy(occ, nao, t2, twoelecint_mo, Erhf)
         self.logger.info(f"Monomer Orbital energies: {hf_mo_E}")
+        self.logger.info(f"t1 shape: {t1.shape}, t2 shape: {t2.shape}, So shape: {So.shape}, Sv shape: {Sv.shape}")
         self.logger.info(f"Dimer {ifrag, jfrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 
         E_ccd, _ = self.cc_parallel.cc_calc(occ, virt, o_act, v_act, nmo, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, self.config.method, self.config.niter, E_mp2_tot, self.config.conv)

@@ -5,6 +5,22 @@ from .diagrams import DiagramBuilder
 from .utils import Symmetrizer, AmplitudeUpdater, FMOCC_LOGGER
 
 class CCParallel:
+    """Parallel coupled-cluster (CC) calculator for FMO calculations.
+
+    Manages the computation of CCSD and ICCSD energies using parallel processing
+    for diagram evaluations.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        Logger instance for FMO calculations.
+    diagram_builder : DiagramBuilder
+        Object for computing CC diagram contributions.
+    amplitude_updater : AmplitudeUpdater
+        Object for updating CC amplitudes.
+    symmetrizer : Symmetrizer
+        Object for symmetrizing residuals.
+    """
     def __init__(self):
         self.logger = FMOCC_LOGGER
         self.diagram_builder = DiagramBuilder()
@@ -12,15 +28,78 @@ class CCParallel:
         self.symmetrizer = Symmetrizer()
 
     def energy_ccd(self, occ, nao, t2, twoelecint_mo):
+        """Compute CCD correlation energy.
+
+        Parameters
+        ----------
+        occ : int
+            Number of occupied orbitals.
+        nao : int
+            Number of atomic orbitals.
+        t2 : np.ndarray
+            Double excitation amplitudes.
+        twoelecint_mo : np.ndarray
+            Two-electron integrals in MO basis.
+
+        Returns
+        -------
+        float
+            CCD correlation energy.
+        """
         E_ccd = 2 * np.einsum('ijab,ijab', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao]) - np.einsum('ijab,ijba', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao])
         return E_ccd
 
     def energy_ccsd(self, occ, nao, t1, t2, twoelecint_mo):
+        """Compute CCSD correlation energy, including single and double excitations.
+
+        Parameters
+        ----------
+        occ : int
+            Number of occupied orbitals.
+        nao : int
+            Number of atomic orbitals.
+        t1 : np.ndarray
+            Single excitation amplitudes.
+        t2 : np.ndarray
+            Double excitation amplitudes.
+        twoelecint_mo : np.ndarray
+            Two-electron integrals in MO basis.
+
+        Returns
+        -------
+        float
+            CCSD, iCCSD and iCCSD-PT correlation energy.
+        """
         E_ccd = self.energy_ccd(occ, nao, t2, twoelecint_mo)
         E_ccd += 2 * np.einsum('ijab,ia,jb', twoelecint_mo[:occ, :occ, occ:nao, occ:nao], t1, t1) - np.einsum('ijab,ib,ja', twoelecint_mo[:occ, :occ, occ:nao, occ:nao], t1, t1)
         return E_ccd
 
     def convergence_I(self, E_ccd, E_old, eps_t, eps_So, eps_Sv, conv, x):
+        """Check convergence for ICCSD calculations.
+
+        Parameters
+        ----------
+        E_ccd : float
+            Current correlation energy.
+        E_old : float
+            Previous correlation energy.
+        eps_t : float
+            Norm of t1 and t2 amplitude updates.
+        eps_So : float
+            Norm of So amplitude updates.
+        eps_Sv : float
+            Norm of Sv amplitude updates.
+        conv : float
+            Convergence threshold.
+        x : int
+            Current iteration number.
+
+        Returns
+        -------
+        tuple[bool, float]
+            A tuple containing a boolean indicating convergence and the current
+            correlation energy.
+        """
         del_E = E_ccd - E_old
         if all(abs(v) <= conv for v in [eps_t, eps_So, eps_Sv, del_E]):
             self.logger.info(f"ICCSD converged at cycle {x+1}, correlation energy: {E_ccd}")
@@ -29,6 +108,27 @@ class CCParallel:
         return False, E_ccd
 
     def convergence(self, E_ccd, E_old, eps, conv, x):
+        """Check convergence for CCSD calculations.
+
+        Parameters
+        ----------
+        E_ccd : float
+            Current correlation energy.
+        E_old : float
+            Previous correlation energy.
+        eps : float
+            Norm of t1 and t2 amplitude updates.
+        conv : float
+            Convergence threshold.
+        x : int
+            Current iteration number.
+
+        Returns
+        -------
+        tuple[bool, float]
+            A tuple containing a boolean indicating convergence and the current
+            correlation energy.
+        """
         del_E = E_ccd - E_old
         if abs(eps) <= conv and abs(del_E) <= conv:
             self.logger.info(f"CCSD converged at cycle {x+1}, correlation energy: {E_ccd}")
@@ -37,6 +137,60 @@ class CCParallel:
         return False, E_ccd
 
     def cc_calc(self, occ, virt, o_act, v_act, nao, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, calc, n_iter, E_old, conv):
+        """Perform coupled-cluster calculations (CCSD or ICCSD or ICCSD-PT).
+
+        Parameters
+        ----------
+        occ : int
+            Number of occupied orbitals.
+        virt : int
+            Number of virtual orbitals.
+        o_act : int
+            Number of active occupied orbitals.
+        v_act : int
+            Number of active virtual orbitals.
+        nao : int
+            Number of atomic orbitals.
+        t1 : np.ndarray
+            Single excitation amplitudes.
+        t2 : np.ndarray
+            Double excitation amplitudes.
+        So : np.ndarray
+            Occupied orbital correction amplitudes.
+        Sv : np.ndarray
+            Virtual orbital correction amplitudes.
+        D1 : np.ndarray
+            Denominator for t1 amplitude updates.
+        D2 : np.ndarray
+            Denominator for t2 amplitude updates.
+        Do : np.ndarray
+            Denominator for So amplitude updates.
+        Dv : np.ndarray
+            Denominator for Sv amplitude updates.
+        twoelecint_mo : np.ndarray
+            Two-electron integrals in MO basis.
+        Fock_mo : np.ndarray
+            Fock matrix in MO basis.
+        calc : str
+            Calculation method ('CCSD' or 'ICCSD-PT').
+        n_iter : int
+            Maximum number of iterations.
+        E_old : float
+            Initial correlation energy.
+        conv : float
+            Convergence threshold.
+
+        Returns
+        -------
+        tuple[float, int]
+            A tuple containing the final correlation energy and the number of
+            iterations performed.
+
+        Raises
+        ------
+        ValueError
+            If the calculation method is not 'CCSD' or 'ICCSD-PT'.
+        """
         for x in range(n_iter):
             if calc == 'CCSD':
                 self.logger.info(f"|| -------------- CCSD --------------- ||")

@@ -1,11 +1,69 @@
-import numpy as np
+import os
+import glob
 import subprocess
 import copy as cp
-import glob
-import os
+import numpy as np
 from .utils import FMOCC_LOGGER
 
 class FMOExtractor:
+    """Extractor for Fragment Molecular Orbital (FMO) data from GAMESS output.
+
+    Parses GAMESS output files to extract fragment-related data such as energies,
+    coefficients, and integrals.
+
+    Parameters
+    ----------
+    gamess_out : str
+        Path to the GAMESS output file.
+    gamess_2eint : str
+        Path to the GAMESS two-electron integral file.
+    outfile1 : str
+        Output file for coefficients.
+    outfile2 : str
+        Output file for Hamiltonian.
+    outfile3 : str
+        Output file for two-electron integrals.
+    tempfile : str
+        Temporary file for processing two-electron integrals.
+    tempfile2 : str
+        Temporary file for storing processed two-electron integrals.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        Logger instance for FMO calculations.
+    gamess_out : str
+        Path to the GAMESS output file.
+    gamess_2eint : str
+        Path to the GAMESS two-electron integral file.
+    outfile1 : str
+        Output file for coefficients.
+    outfile2 : str
+        Output file for Hamiltonian.
+    outfile3 : str
+        Output file for two-electron integrals.
+    tempfile : str
+        Temporary file for processing two-electron integrals.
+    tempfile2 : str
+        Temporary file for storing processed two-electron integrals.
+    dimer_key : List[str]
+        Keywords identifying dimer data in GAMESS output.
+    mono_key : List[str]
+        Keywords identifying monomer data in GAMESS output.
+    string_list : List[str]
+        Strings to filter out during two-electron integral processing.
+    ifrag : int
+        Index of the first fragment (set during coeff method).
+    jfrag : int
+        Index of the second fragment for dimers (set during coeff method).
+    Erhf : float
+        RHF energy of the fragment (set during coeff method).
+
+    Raises
+    ------
+    FileNotFoundError
+        If the GAMESS output or two-electron integral file is not found.
+    """
     def __init__(self, gamess_out, gamess_2eint, outfile1, outfile2, outfile3, tempfile, tempfile2):
         self.logger = FMOCC_LOGGER
         if not os.path.exists(gamess_out):
@@ -24,6 +82,13 @@ class FMOExtractor:
         self.string_list = ['II,JST,KST,LST', 'SCHWARZ INEQUALITY']
 
     def get_enuc(self):
+        """Extract nuclear repulsion energy from GAMESS output.
+
+        Returns
+        -------
+        float or None
+            Nuclear repulsion energy if found, else None.
+        """
         with open(self.gamess_out, 'r') as outfile:
             for line in outfile:
                 if "Nuclear repulsion energy:" in line.strip():
@@ -32,6 +97,18 @@ class FMOExtractor:
         return None
     
     def get_nfrags(self):
+        """Extract the number of fragments from GAMESS output.
+
+        Returns
+        -------
+        int
+            Number of fragments.
+
+        Raises
+        ------
+        RuntimeError
+            If parsing fails or number of fragments is not found.
+        """
         try:
             with open(self.gamess_out, 'r') as outfile:
                 for line in outfile:
@@ -43,6 +120,18 @@ class FMOExtractor:
         return 0
 
     def get_nbasis(self):
+        """Extract the total number of basis functions from GAMESS 2e integral file.
+
+        Returns
+        -------
+        int
+            Total number of basis functions.
+
+        Raises
+        ------
+        RuntimeError
+            If parsing fails or number of basis functions is not found.
+        """
         try:
             with open(self.gamess_2eint, 'r') as outfile:
                 for line in outfile:
@@ -54,6 +143,18 @@ class FMOExtractor:
         return 0
 
     def get_tot_rhf(self):
+        """Extract the total RHF energy from GAMESS output.
+
+        Returns
+        -------
+        float
+            Total RHF energy.
+
+        Raises
+        ------
+        RuntimeError
+            If parsing fails or RHF energy is not found.
+        """
         try:
             with open(self.gamess_out, 'r') as outfile:
                 for line in outfile:
@@ -65,6 +166,18 @@ class FMOExtractor:
         return 0.0
     
     def get_frag_naos_atoms(self, lnum):
+        """Extract the number of atomic orbitals and atoms for each fragment.
+
+        Parameters
+        ----------
+        lnum : int
+            Line number index for parsing GAMESS output.
+
+        Returns
+        -------
+        tuple[List[int], List[int]]
+            Lists of number of atomic orbitals and number of atoms for each fragment.
+        """
         with open(self.gamess_out, 'r') as outfile:
             outlines = outfile.readlines()
         nao1 = []
@@ -88,6 +201,20 @@ class FMOExtractor:
         return nao1, natoms
     
     def get_frag_nmos(self, lnum, nfrag):
+        """Extract the number of molecular orbitals for each fragment.
+
+        Parameters
+        ----------
+        lnum : int
+            Line number index for parsing GAMESS output.
+        nfrag : int
+            Number of fragments.
+
+        Returns
+        -------
+        List[int]
+            Number of molecular orbitals for each fragment.
+        """
         with open(self.gamess_out, 'r') as infile:
             inlines = infile.readlines()
         nmo_mono = []
@@ -101,6 +228,18 @@ class FMOExtractor:
         return nmo_mono
     
     def get_nelec(self):
+        """Extract the total number of electrons from GAMESS output.
+
+        Returns
+        -------
+        int
+            Total number of electrons.
+
+        Raises
+        ------
+        RuntimeError
+            If parsing fails or number of electrons is not found.
+        """
         try:
             with open(self.gamess_out, 'r') as outfile:
                 for line in outfile:
@@ -112,6 +251,22 @@ class FMOExtractor:
         return 0
     
     def coeff(self, lnum, nmer, outfile1):
+        """Extract coefficient data from GAMESS output.
+
+        Parameters
+        ----------
+        lnum : int
+            Line number index for parsing GAMESS output.
+        nmer : int
+            Number of monomers (1 for monomer, 2 for dimer).
+        outfile1 : str
+            Output file for coefficients.
+
+        Returns
+        -------
+        tuple[int, int, float, int]
+            Fragment indices (ifrag, jfrag), RHF energy, and updated line number.
+        """
         with open(self.gamess_out, 'r') as infile:
             inlines = infile.readlines()
         ini_idx = 0
@@ -151,6 +306,22 @@ class FMOExtractor:
         return self.ifrag, self.jfrag, self.Erhf, lnum
     
     def bare_hamiltonian(self, lnum, nmer, outfile2):
+        """Extract bare Hamiltonian data from GAMESS output.
+
+        Parameters
+        ----------
+        lnum : int
+            Line number index for parsing GAMESS output.
+        nmer : int
+            Number of monomers (1 for monomer, 2 for dimer).
+        outfile2 : str
+            Output file for Hamiltonian data.
+
+        Returns
+        -------
+        tuple[int, int, float]
+            Fragment indices (ifrag, jfrag) and RHF energy.
+        """
         with open(self.gamess_out, 'r') as infile:
             inlines = infile.readlines()
         ini_idx = 0
@@ -190,7 +361,23 @@ class FMOExtractor:
         self.logger.info(f"Extracted bare Hamiltonian to {outfile2}")
         return self.ifrag, self.jfrag, self.Erhf
     
-    def twoelecint(self, lnum, nmer, outfile3):                                                                                         
+    def twoelecint(self, lnum, nmer, outfile3):
+        """Extract two-electron integral data from GAMESS output.
+
+        Parameters
+        ----------
+        lnum : int
+            Line number index for parsing GAMESS 2e integral file.
+        nmer : int
+            Number of monomers (1 for monomer, 2 for dimer).
+        outfile3 : str
+            Output file for two-electron integrals.
+
+        Returns
+        -------
+        tuple[int, int, float, int]
+            Fragment indices (ifrag, jfrag), RHF energy, and updated line number.
+        """
         with open(self.gamess_2eint, 'r') as infile:
             inlines = infile.readlines()
         ini_idx = 0
@@ -232,6 +419,22 @@ class FMOExtractor:
         return self.ifrag, self.jfrag, self.Erhf, lnum
 
     def get_coeff(self, nmo, nao, outfile1):
+        """Read and parse molecular orbital coefficients.
+
+        Parameters
+        ----------
+        nmo : int
+            Number of molecular orbitals.
+        nao : int
+            Number of atomic orbitals.
+        outfile1 : str
+            File containing coefficient data.
+
+        Returns
+        -------
+        np.ndarray
+            Molecular orbital coefficient matrix.
+        """
         with open(outfile1, 'r') as infile:
             inlines = infile.readlines()
         elements = np.zeros((nmo,nao))
@@ -288,6 +491,22 @@ class FMOExtractor:
         return elements
 
     def get_orb_energy(self, nao, nmo, outfile1):
+        """Extract orbital energies from coefficient file.
+
+        Parameters
+        ----------
+        nao : int
+            Number of atomic orbitals.
+        nmo : int
+            Number of molecular orbitals.
+        outfile1 : str
+            File containing coefficient data.
+
+        Returns
+        -------
+        np.ndarray
+            Array of orbital energies.
+        """
         with open(outfile1, 'r') as infile:
             inlines = infile.readlines()
         orb_energy = []
@@ -337,6 +556,20 @@ class FMOExtractor:
         return orb_energy
 
     def get_1e_parameter(self, nao, outfile2):
+        """Extract one-electron parameters from Hamiltonian file.
+
+        Parameters
+        ----------
+        nao : int
+            Number of atomic orbitals.
+        outfile2 : str
+            File containing Hamiltonian data.
+
+        Returns
+        -------
+        np.ndarray
+            Matrix of one-electron parameters.
+        """
         with open(outfile2, 'r') as infile:
             inlines = infile.readlines()
         elements=np.zeros((nao,nao))
@@ -370,6 +603,25 @@ class FMOExtractor:
         return elements
 
     def twoelecint_process(self, outfile3, tempfile):
+        """Process two-electron integrals by filtering specific strings.
+
+        Parameters
+        ----------
+        outfile3 : str
+            Input file containing two-electron integrals.
+        tempfile : str
+            Output file for processed integrals.
+
+        Returns
+        -------
+        int
+            Zero to indicate successful processing.
+
+        Raises
+        ------
+        RuntimeError
+            If an error occurs during processing.
+        """
         try:
             with open(outfile3, 'r') as infile:
                 lines = infile.readlines()
@@ -383,6 +635,13 @@ class FMOExtractor:
             raise RuntimeError(f"Error processing two-electron integrals: {e}")
 
     def bash_run(self):
+        """Execute a bash script to process two-electron integrals.
+
+        Raises
+        ------
+        RuntimeError
+            If the script is not found or fails to execute.
+        """
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         script_path  = os.path.join(project_root, 'Scripts', 'twoeint_process.sh')
         if not os.path.exists(script_path):
@@ -394,6 +653,25 @@ class FMOExtractor:
             raise RuntimeError(f"Error running twoeint_process.sh: {e}")
 
     def read_2eint(self, nao, tempfile2):
+        """Read two-electron integrals from processed file.
+
+        Parameters
+        ----------
+        nao : int
+            Number of atomic orbitals.
+        tempfile2 : str
+            File containing processed two-electron integrals.
+
+        Returns
+        -------
+        np.ndarray
+            Four-dimensional array of two-electron integrals.
+
+        Raises
+        ------
+        RuntimeError
+            If an error occurs while reading integrals.
+        """
         try:
             with open(tempfile2, 'r') as infile:
                 lines = infile.readlines()
@@ -415,6 +693,12 @@ class FMOExtractor:
             raise RuntimeError(f"Error reading 2e integrals from {tempfile2}: {e}")
 
     def cleanup(self):
+        """Remove temporary text files.
+
+        Notes
+        -----
+        Logs warnings if any file cannot be deleted.
+        """
         files = glob.glob('*.txt')
         for f in files:
             if os.path.exists(f):

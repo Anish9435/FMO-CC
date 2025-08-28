@@ -1,11 +1,109 @@
-from ast import pattern
 import json
 from itertools import combinations
 from typing import List, Dict, Any
 from .utils import FMOCC_LOGGER
 
 class FMOConfig:
+    """Configuration manager for Fragment Molecular Orbital (FMO) calculations.
+
+    Loads and validates configuration from a JSON file and updates fragment-related
+    parameters based on GAMESS output.
+
+    Parameters
+    ----------
+    input_file : str
+        Path to the JSON configuration file.
+
+    Attributes
+    ----------
+    logger : logging.Logger
+        Logger instance for FMO calculations.
+    data : Dict[str, Any]
+        Raw configuration data loaded from the JSON file.
+    elements : List[str]
+        List of chemical elements in the system.
+    method : str
+        Calculation method (e.g., 'CCSD', 'ICCSD', 'ICCSD-PT').
+    conv : float
+        Convergence threshold for calculations.
+    basis_set : str
+        Basis set used for the calculation.
+    niter : int
+        Maximum number of iterations for convergence.
+    filename : str
+        Base filename for input/output files.
+    icharge : List[int]
+        List of charges for fragments.
+    o_act : int
+        Number of active occupied orbitals.
+    v_act : int
+        Number of active virtual orbitals.
+    nfo : int
+        Number of frozen occupied orbitals.
+    nfv : int
+        Number of frozen virtual orbitals.
+    frag_atom : int
+        Number of atoms per fragment unit.
+    fragment_index : List[List[int]]
+        Indices defining fragment boundaries.
+    coeff_file : str
+        Filename for coefficient output.
+    hamiltonian_file : str
+        Filename for Hamiltonian output.
+    twoelecint_file : str
+        Filename for two-electron integral output.
+    nfrag : int
+        Number of fragments.
+    nao_mono : List[int]
+        Number of atomic orbitals for each monomer.
+    nao_dimer : List[int]
+        Number of atomic orbitals for each dimer.
+    nmo_mono : List[int]
+        Number of molecular orbitals for each monomer.
+    nmo_dimer : List[int]
+        Number of molecular orbitals for each dimer.
+    frag_elec : List[int]
+        Number of electrons in each fragment.
+    occ_mono : List[int]
+        Number of occupied orbitals for each monomer.
+    virt_mono : List[int]
+        Number of virtual orbitals for each monomer.
+    occ_dimer : List[int]
+        Number of occupied orbitals for each dimer.
+    virt_dimer : List[int]
+        Number of virtual orbitals for each dimer.
+    o_act_mono : List[int]
+        Number of active occupied orbitals for each monomer.
+    v_act_mono : List[int]
+        Number of active virtual orbitals for each monomer.
+    o_act_dimer : List[int]
+        Number of active occupied orbitals for each dimer.
+    v_act_dimer : List[int]
+        Number of active virtual orbitals for each dimer.
+    nfo_mono : List[int]
+        Number of frozen occupied orbitals for each monomer.
+    nfv_mono : List[int]
+        Number of frozen virtual orbitals for each monomer.
+    nfo_dimer : List[int]
+        Number of frozen occupied orbitals for each dimer.
+    nfv_dimer : List[int]
+        Number of frozen virtual orbitals for each dimer.
+
+    Raises
+    ------
+    ValueError
+        If the input JSON file is invalid, missing required keys, or contains
+        invalid values.
+    """
     def __init__(self, input_file: str):
+        """
+        Initialize FMOConfig from an input JSON file.
+
+        Parameters
+        ----------
+        input_file : str
+            Path to the JSON configuration file.
+        """
         self.logger = FMOCC_LOGGER
         try:
             with open(input_file) as f:
@@ -60,7 +158,6 @@ class FMOConfig:
         self.hamiltonian_file = data.get("hamiltonian_file", "hamiltonian.txt")
         self.twoelecint_file = data.get("twoelecint_file", "twoelecint.txt")
 
-        # CHANGE: Initialize placeholders; updated by FMOExtractor
         self.nfrag: int = 0
         self.nao_mono: List[int] = []
         self.nao_dimer: List[int] = []
@@ -81,6 +178,20 @@ class FMOConfig:
         self.nfv_dimer: List[int] = []
 
     def update_from_gamess(self, nfrag: int, nao_mono: List[int]) -> None:
+        """Update configuration parameters based on GAMESS output.
+
+        Parameters
+        ----------
+        nfrag : int
+            Number of fragments.
+        nao_mono : List[int]
+            Number of atomic orbitals for each monomer.
+
+        Raises
+        ------
+        ValueError
+            If nfrag or nao_mono are invalid or inconsistent with fragment_index.
+        """
         if nfrag <= 0:
             self.logger.error(f"Invalid nfrag: {nfrag}")
             raise ValueError(f"Invalid nfrag: {nfrag}")
@@ -125,6 +236,18 @@ class FMOConfig:
         self.logger.info(f"Total number of electrons in fragments: {self.frag_elec}")
 
     def _compute_frag_elec(self) -> List[int]:
+        """Compute the number of electrons in each fragment.
+
+        Returns
+        -------
+        List[int]
+            Number of electrons in each fragment.
+
+        Raises
+        ------
+        ValueError
+            If the atom_pattern is not specified in the JSON configuration.
+        """
         elec_map = {"1": 1, "H": 1, "2": 2, "He": 2,
                     "6": 6, "C": 6, "7": 7, "N": 7,
                     "8": 8, "O": 8, "9": 9, "F": 9}

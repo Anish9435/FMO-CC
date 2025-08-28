@@ -44,11 +44,7 @@ pip install -e . || {
     exit 1
 }
 
-# ---- Step 5: Optional extra dependencies ----
-# echo "Installing additional dependencies (if any)..."
-# pip install -r requirements.txt
-
-# ---- Step 6: Cleanup old pycache (optional) ----
+# ---- Step 5: Cleanup old pycache (optional) ----
 echo "Cleaning up __pycache__ directories..."
 find src/fmocc -type d -name "__pycache__" -exec rm -rf {} +
 

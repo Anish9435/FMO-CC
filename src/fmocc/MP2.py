@@ -1,6 +1,6 @@
 import gc
-import numpy as np
 import copy as cp
+import numpy as np
 from .utils import FMOCC_LOGGER
 
 class MP2Calculator:
@@ -29,9 +29,6 @@ class MP2Calculator:
         return nao, nmo, virt, twoelecint_mo, Fock_mo, hf_mo_E
 
     def guess_t1(self, occ, virt, nmo, hf_mo_E, Fock_mo):
-        if Fock_mo.shape != (nmo, nmo) or hf_mo_E.shape != (nmo,):
-            self.logger.error(f"Invalid shapes: Fock_mo={Fock_mo.shape}, hf_mo_E={hf_mo_E.shape}")
-            raise ValueError(f"Invalid input shapes")
         t1 = np.zeros((occ, virt))
         D1 = np.zeros((occ, virt))
         for i in range(occ):
@@ -42,9 +39,6 @@ class MP2Calculator:
         return t1, D1
 
     def guess_t2(self, occ, virt, nmo, hf_mo_E, twoelecint_mo):
-        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo) or hf_mo_E.shape != (nmo,):
-            self.logger.error(f"Invalid shapes: twoelecint_mo={twoelecint_mo.shape}, hf_mo_E={hf_mo_E.shape}")
-            raise ValueError(f"Invalid input shapes")
         D2 = np.zeros((occ, occ, virt, virt))
         t2 = np.zeros((occ, occ, virt, virt))
         for i in range(occ):
@@ -57,9 +51,6 @@ class MP2Calculator:
         return t2, D2
 
     def guess_so(self, occ, virt, nmo, o_act, hf_mo_E, twoelecint_mo):
-        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo) or hf_mo_E.shape != (nmo,):
-            self.logger.error(f"Invalid shapes: twoelecint_mo={twoelecint_mo.shape}, hf_mo_E={hf_mo_E.shape}")
-            raise ValueError(f"Invalid input shapes")
         Do = np.zeros((occ, occ, virt, o_act))
         So = np.zeros((occ, occ, virt, o_act))
         for i in range(occ):
@@ -72,9 +63,6 @@ class MP2Calculator:
         return So, Do
 
     def guess_sv(self, occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo):
-        if twoelecint_mo.shape != (nmo, nmo, nmo, nmo) or hf_mo_E.shape != (nmo,):
-            self.logger.error(f"Invalid shapes: twoelecint_mo={twoelecint_mo.shape}, hf_mo_E={hf_mo_E.shape}")
-            raise ValueError(f"Invalid input shapes")
         Dv = np.zeros((occ, v_act, virt, virt))
         Sv = np.zeros((occ, v_act, virt, virt))
         for i in range(occ):
@@ -87,9 +75,6 @@ class MP2Calculator:
         return Sv, Dv
 
     def MP2_energy(self, occ, nao, t2, twoelecint_mo, E_hf):
-        if t2.shape != (occ, occ, nao - occ, nao - occ):
-            self.logger.error(f"Invalid t2 shape: {t2.shape}")
-            raise ValueError(f"Invalid t2 shape")
         E_mp2 = 2 * np.einsum('ijab,ijab', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao]) - np.einsum('ijab,ijba', t2, twoelecint_mo[:occ, :occ, occ:nao, occ:nao])
         E_mp2_tot = E_hf + E_mp2
         return E_mp2, E_mp2_tot

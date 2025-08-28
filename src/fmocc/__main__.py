@@ -13,7 +13,7 @@ def main():
     config_dir = os.path.dirname(config_file)
     logger = FMOCC_LOGGER
     try:
-        processor = FMOProcessor(args.config, base_dir=config_dir)
+        processor = FMOProcessor(config_file, base_dir=config_dir)
         E_cc, E_cc_tot = processor.run()
         logger.info(f"CC Correlation Energy: {E_cc:.9f}")
         logger.info(f"Total CC Energy: {E_cc_tot:.9f}")
@@ -25,3 +25,6 @@ def main():
     except Exception as e:
         logger.error(f"Error running FMO-CC: {e}")
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()

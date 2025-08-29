@@ -22,8 +22,8 @@ class CustomColoredFormatter(ColoredFormatter):
         formatted_prefix = f"{green}{timestamp} [{levelname}]:{reset}"
         yellow = "\033[33m"
         formatted_details = f"{yellow}{record.filename}:{record.funcName}:{record.lineno} -{reset}"
-        record.msg = self._auto_color_message(str(record.msg))
-        formatted_message = f"{formatted_prefix} {formatted_details} {record.msg}"
+        colored_msg = self._auto_color_message(str(record.msg))
+        formatted_message = f"{formatted_prefix} {formatted_details} {colored_msg}"
         return formatted_message
     
     def _auto_color_message(self, message: str) -> str:
@@ -41,7 +41,7 @@ class CustomColoredFormatter(ColoredFormatter):
         return message
 
 formatter = CustomColoredFormatter(
-    "%(log_color)s%(message)s",  # Message is fully formatted in CustomColoredFormatter
+    "%(message)s",  # Message is fully formatted in CustomColoredFormatter
     datefmt="%Y-%m-%d %H:%M:%S",
     log_colors={
         'DEBUG': 'cyan',

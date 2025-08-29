@@ -99,11 +99,11 @@ run_fmo_cc -c my_config.json
 | `icharge`               | List of charges for each fragment                                           |
 | `integral_transform`    | Mode for integral transformation: `incore` or `disk`                        |
 | `fmo_type`              | Fragment Molecular Orbital type: `FMO1`, `FMO2`, etc.                       |
-| `molecule`              | Explicit dictionary of fragments with atom coordinates and element numbers  |
+| `complex_type`          | specification of the complex: `covalent`, `non-covalent`, etc.              |
 ```
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
-**Note:** Automation for the covalently bonded systems is currently underway. The current implementation works well for the non-covalently bonded systems
+**Note:** the covalent bonded systems support FMO1 calculation as of now.
 
 ## Project Structure
 

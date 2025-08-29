@@ -226,14 +226,22 @@ class FMOExtractor:
         with open(self.gamess_out, 'r') as infile:
             inlines = infile.readlines()
         nmo_mono = []
-        for i, line in enumerate(reversed(inlines[:lnum])):
-            if "TOTAL NUMBER OF MOS IN VARIATION SPACE=" in line.strip():
-                val = int(line.split()[-1])
-                nmo_mono.append(val)
+        frag_id = []
+        for line in reversed(inlines[:lnum]):
+            if line.strip().startswith("RHF      monomer"):
+                parts = line.replace(",", "").split()
+                fid = int(parts[2])
+                l0_val = int(parts[8])
+
+                nmo_mono.append(l0_val)
+                frag_id.append(fid)
                 if len(nmo_mono) == nfrag:
                     break
-        self.logger.info(f"Extracted fragment MOs: {nmo_mono}")
-        return nmo_mono
+        self.logger.info(f"Raw parsed frag_id={frag_id}, nmo_mono={nmo_mono}")
+        id_to_nmo = dict(zip(frag_id, nmo_mono))
+        ordered_nmo = [id_to_nmo[i] for i in range(1, nfrag+1)]
+        self.logger.info(f"Extracted monomer NMOs: {ordered_nmo}")
+        return ordered_nmo
     
     def get_nelec(self):
         """Extract the total number of electrons from GAMESS output.

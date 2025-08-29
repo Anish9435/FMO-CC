@@ -222,7 +222,10 @@ class FMOConfig:
         self.nfrag = nfrag
         self.nao_mono = nao_mono
         self.nao_dimer = [sum(combo) for combo in combinations(self.nao_mono, 2)]
-        self.nmo_mono = self.nao_mono[:]
+        if hasattr(self, "nmo_mono") and self.nmo_mono:
+            self.nmo_mono = self.nmo_mono
+        else:
+            self.nmo_mono = self.nao_mono[:]
         self.nmo_dimer = self.nao_dimer[:]
         self.frag_elec = self._compute_frag_elec(occ_mono)
         self.occ_mono = occ_mono if self.complex_type == "covalent" else [int(e // 2) for e in self.frag_elec]
@@ -255,7 +258,7 @@ class FMOConfig:
         self.v_act_dimer.sort()
         self.nfo_dimer.sort()
         self.nfv_dimer.sort()
-        self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}")  # CHANGE: Logging update
+        self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")  # CHANGE: Logging update
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
         self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
         self.logger.info(f"Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")

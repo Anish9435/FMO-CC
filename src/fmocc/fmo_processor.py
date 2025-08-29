@@ -61,7 +61,13 @@ class FMOProcessor:
         nao_mono, _, occ_mono = self.extractor.get_frag_naos_atoms(self.lnum1, self.config.complex_type)
         if not occ_mono and self.config.complex_type == "non-covalent":
             occ_mono = [0]*nfrag
-        self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
+        if self.config.complex_type == "covalent":
+            nmo_mono = self.extractor.get_frag_nmos(self.lnum1, nfrag)
+            self.config.nmo_mono = nmo_mono
+            self.logger.info(f"HEREEEEEEE!!!")
+            self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
+        else:
+            self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
         self.calculator = FMOCalculator(self.config, self.extractor, self)
         self.logger.info(f"Initialized FMOProcessor with {nfrag} fragments and nao_mono: {nao_mono}")
 

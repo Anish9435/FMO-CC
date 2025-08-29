@@ -142,7 +142,7 @@ class FMOExtractor:
             raise RuntimeError(f"Error parsing nbasis from {self.gamess_2eint}: {e}")
         return 0
 
-    def get_tot_rhf(self):
+    def get_tot_rhf(self, complex_type):
         """Extract the total RHF energy from GAMESS output.
 
         Returns
@@ -158,14 +158,18 @@ class FMOExtractor:
         try:
             with open(self.gamess_out, 'r') as outfile:
                 for line in outfile:
-                    if "Total energy of the molecule: Euncorr(2)=" in line.strip():
-                        return float(line.split()[-1])
+                    if complex_type == "non-covalent":
+                        if "Total energy of the molecule: Euncorr(2)=" in line.strip():
+                            return float(line.split()[-1])
+                    else:
+                        if "Total energy of the molecule: Euncorr(1)=" in line.strip():
+                            return float(line.split()[-1])                        
             self.logger.error("Total RHF energy not found in GAMESS output")
         except Exception as e:
             raise RuntimeError(f"Error parsing RHF energy from {self.gamess_out}: {e}")
         return 0.0
     
-    def get_frag_naos_atoms(self, lnum):
+    def get_frag_naos_atoms(self, lnum, complex_type):
         """Extract the number of atomic orbitals and atoms for each fragment.
 
         Parameters
@@ -182,6 +186,7 @@ class FMOExtractor:
             outlines = outfile.readlines()
         nao1 = []
         natoms = []
+        occ_mono = [] if complex_type == "covalent" else []
         ini_idx = 0
         tot = lnum
         for i,line in enumerate(reversed(outlines[:lnum])):
@@ -195,10 +200,13 @@ class FMOExtractor:
                 val2 = int(line.split()[3])
                 nao1.append(val1)
                 natoms.append(val2)
+                if complex_type == "covalent":
+                    val3 = int(line.split()[5])
+                    occ_mono.append(val3)
             else:
                 break
         self.logger.info(f"Extracted nao1: {nao1}, natoms: {natoms}")
-        return nao1, natoms
+        return nao1, natoms, occ_mono
     
     def get_frag_nmos(self, lnum, nfrag):
         """Extract the number of molecular orbitals for each fragment.
@@ -281,7 +289,7 @@ class FMOExtractor:
                     self.Erhf = float(line.split()[5])
                     count += 1
                 if count > 0 and line.strip() == "EIGENVECTORS":
-                    self.lnum = total_lines - i
+                    lnum = total_lines - i
                     ini_idx = total_lines - i + 1
                     break
             elif nmer == 1:

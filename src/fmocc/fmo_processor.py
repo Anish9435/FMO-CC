@@ -58,8 +58,10 @@ class FMOProcessor:
         with open(gamess_2eint, 'r') as f:
             self.lnum2 = len(f.readlines())
         nfrag = self.extractor.get_nfrags()
-        nao_mono, _ = self.extractor.get_frag_naos_atoms(self.lnum1)
-        self.config.update_from_gamess(nfrag, nao_mono)
+        nao_mono, _, occ_mono = self.extractor.get_frag_naos_atoms(self.lnum1, self.config.complex_type)
+        if not occ_mono and self.config.complex_type == "non-covalent":
+            occ_mono = [0]*nfrag
+        self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
         self.calculator = FMOCalculator(self.config, self.extractor, self)
         self.logger.info(f"Initialized FMOProcessor with {nfrag} fragments and nao_mono: {nao_mono}")
 
@@ -102,7 +104,7 @@ class FMOProcessor:
             mono_cc_corr.append(E_ccd)
             self.logger.info("Completed monomer calculation")
 
-        FMO_RHF = self.extractor.get_tot_rhf()
+        FMO_RHF = self.extractor.get_tot_rhf(self.config.complex_type)
         if self.config.fmo_type == "FMO2":
             fmo_mp2_corr = sum(dimer_mp2_corr) - (self.config.nfrag - 2) * sum(mono_mp2_corr)
             fmo_cc_corr = sum(dimer_cc_corr) - (self.config.nfrag - 2) * sum(mono_cc_corr)

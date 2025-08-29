@@ -1,6 +1,6 @@
 import json
+from typing import List
 from itertools import combinations
-from typing import List, Dict, Any
 from .utils import FMOCC_LOGGER
 
 class FMOConfig:
@@ -112,7 +112,7 @@ class FMOConfig:
             self.logger.error(f"Error reading {input_file}: {e}")
             raise ValueError(f"Error reading {input_file}: {e}")
         self.data = data
-        required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge", "fmo_type"]
+        required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge", "fmo_type", "complex_type"]
         for key in required_keys:
             if key not in data:
                 self.logger.error(f"Missing required key in JSON: {key}")
@@ -153,6 +153,18 @@ class FMOConfig:
             self.logger.error(f"Invalid fmo_type: {self.fmo_type}. Must be 'FMO1' or 'FMO2'")
             raise ValueError(f"Invalid fmo_type: {self.fmo_type}")
         
+        self.complex_type = data["complex_type"]
+        if self.complex_type not in ["covalent", "non-covalent"]:
+            self.logger.error(f"Invalid complex_type: {self.complex_type}. Must be 'covalent' or 'non-covalent'")
+            raise ValueError(f"Invalid complex_type: {self.complex_type}")
+        
+        if self.complex_type == "covalent" and self.fmo_type != "FMO1":
+            self.logger.error("Covalent systems must use FMO1")
+            raise ValueError("Covalent systems must use FMO1")
+        
+        if self.complex_type == "non-covalent" and not data.get("atom_pattern"):
+            self.logger.warning("Non-covalent system specified but no frag_atom_patterns or atom_pattern provided")
+ 
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)
         self.nfo = data.get("nfo", 0)
@@ -182,7 +194,7 @@ class FMOConfig:
         self.nfo_dimer: List[int] = []
         self.nfv_dimer: List[int] = []
 
-    def update_from_gamess(self, nfrag: int, nao_mono: List[int]) -> None:
+    def update_from_gamess(self, nfrag: int, nao_mono: List[int], occ_mono: List[int]) -> None:
         """Update configuration parameters based on GAMESS output.
 
         Parameters
@@ -203,19 +215,23 @@ class FMOConfig:
         if not nao_mono or any(n <= 0 for n in nao_mono):
             self.logger.error(f"Invalid nao_mono: {nao_mono}")
             raise ValueError(f"Invalid nao_mono: {nao_mono}")
+        if self.complex_type == "covalent" and (not occ_mono or any (n < 0 for n in occ_mono) or len(occ_mono) != nfrag):
+            self.logger.error(f"Invalid occ_mono for covalent system: {occ_mono}")
+            raise ValueError(f"Invalid occ_mono for covalent system: {occ_mono}") 
         
         self.nfrag = nfrag
         self.nao_mono = nao_mono
         self.nao_dimer = [sum(combo) for combo in combinations(self.nao_mono, 2)]
         self.nmo_mono = self.nao_mono[:]
         self.nmo_dimer = self.nao_dimer[:]
-        self.frag_elec = self._compute_frag_elec()
-        self.occ_mono = [int(e // 2) for e in self.frag_elec]
+        self.frag_elec = self._compute_frag_elec(occ_mono)
+        self.occ_mono = occ_mono if self.complex_type == "covalent" else [int(e // 2) for e in self.frag_elec]
+        #self.occ_mono = [int(e // 2) for e in self.frag_elec]
         self.virt_mono = [nmo - occ for nmo, occ in zip(self.nmo_mono, self.occ_mono)]
         self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
         self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
         nmer: List[int] = []
-        if self.fragment_index:
+        if self.fragment_index and self.complex_type == "non-covalent":
             if len(self.fragment_index) != self.nfrag:
                 self.logger.error(f"Mismatch between nfrag ({self.nfrag}) and len(fragment_index) ({len(self.fragment_index)})")
                 raise ValueError(f"Mismatch between nfrag and fragment_index")
@@ -231,6 +247,14 @@ class FMOConfig:
         self.v_act_dimer = [sum(combo) for combo in combinations(self.v_act_mono, 2)]
         self.nfo_dimer = [sum(combo) for combo in combinations(self.nfo_mono, 2)]
         self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
+        self.nao_dimer.sort()
+        self.nmo_dimer.sort()
+        self.occ_dimer.sort()
+        self.virt_dimer.sort()
+        self.o_act_dimer.sort()
+        self.v_act_dimer.sort()
+        self.nfo_dimer.sort()
+        self.nfv_dimer.sort()
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}")  # CHANGE: Logging update
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
         self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
@@ -240,7 +264,7 @@ class FMOConfig:
         self.logger.info(f"Number of frozen virtual orbitals for dimer: {self.nfv_dimer} and for monomer: {self.nfv_mono}")
         self.logger.info(f"Total number of electrons in fragments: {self.frag_elec}")
 
-    def _compute_frag_elec(self) -> List[int]:
+    def _compute_frag_elec(self, occ_mono: List[int]) -> List[int]:
         """Compute the number of electrons in each fragment.
 
         Returns
@@ -257,21 +281,23 @@ class FMOConfig:
                     "6": 6, "C": 6, "7": 7, "N": 7,
                     "8": 8, "O": 8, "9": 9, "F": 9}
 
-        # You must specify one repeating unit (monomer pattern) in JSON
-        # Example: "atom_pattern": ["8","1","1"] for H2O
-        pattern = self.data.get("atom_pattern", [])
-        if not pattern:
-            raise ValueError("Please specify 'atom_pattern' in JSON, e.g. ['8','1','1'] for water")
-
-        result = []
-        for frag in self.fragment_index:
-            start, end = frag
-            length = end - start + 1
-            # build the atom list for this fragment by repeating pattern
-            atoms = [pattern[i % len(pattern)] for i in range(length)]
-            # sum electrons
-            frag_elec = sum(elec_map[a] for a in atoms)
-            result.append(frag_elec)
+        if self.complex_type == "covalent":
+            if not occ_mono:
+                self.logger.error(f"No occupied orbital has been detected!!")
+            result = [2*na for na in occ_mono]
+            self.logger.info(f" Covalent System: occ_mono: {occ_mono} and fragment electron: {result}")
+        
+        else:
+            pattern = self.data.get("atom_pattern", [])
+            if not pattern:
+                raise ValueError("Please specify 'atom_pattern' in JSON, e.g. ['8','1','1'] for water")
+            result = []
+            for frag in self.fragment_index:
+                start, end = frag
+                length = end - start + 1
+                atoms = [pattern[i % len(pattern)] for i in range(length)]
+                frag_elec = sum(elec_map[a] for a in atoms)
+                result.append(frag_elec)
 
         self.logger.info(f"Computed fragment electrons: {result}")
         return result

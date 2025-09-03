@@ -158,9 +158,9 @@ class FMOConfig:
             self.logger.error(f"Invalid complex_type: {self.complex_type}. Must be 'covalent' or 'non-covalent'")
             raise ValueError(f"Invalid complex_type: {self.complex_type}")
         
-        if self.complex_type == "covalent" and self.fmo_type != "FMO1":
-            self.logger.error("Covalent systems must use FMO1")
-            raise ValueError("Covalent systems must use FMO1")
+        #if self.complex_type == "covalent" and self.fmo_type != "FMO1":
+        #    self.logger.error("Covalent systems must use FMO1")
+        #    raise ValueError("Covalent systems must use FMO1")
         
         if self.complex_type == "non-covalent" and not data.get("atom_pattern"):
             self.logger.warning("Non-covalent system specified but no frag_atom_patterns or atom_pattern provided")
@@ -221,15 +221,17 @@ class FMOConfig:
         
         self.nfrag = nfrag
         self.nao_mono = nao_mono
-        self.nao_dimer = [sum(combo) for combo in combinations(self.nao_mono, 2)]
+        ndimer = len(list(combinations(range(self.nfrag), 2)))
+        #self.nao_dimer = [sum(combo) for combo in combinations(self.nao_mono, 2)]
+        self.nao_dimer = [0] * ndimer if (self.complex_type == "covalent" and self.fmo_type == "FMO2") else [sum(combo) for combo in combinations(self.nao_mono, 2)]
         if hasattr(self, "nmo_mono") and self.nmo_mono:
             self.nmo_mono = self.nmo_mono
         else:
             self.nmo_mono = self.nao_mono[:]
-        self.nmo_dimer = self.nao_dimer[:]
+        #self.nmo_dimer = self.nao_dimer[:]
+        self.nmo_dimer = [0] * len(self.nao_dimer) if (self.complex_type == "covalent" and self.fmo_type == "FMO2") else self.nao_dimer[:]
         self.frag_elec = self._compute_frag_elec(occ_mono)
         self.occ_mono = occ_mono if self.complex_type == "covalent" else [int(e // 2) for e in self.frag_elec]
-        #self.occ_mono = [int(e // 2) for e in self.frag_elec]
         self.virt_mono = [nmo - occ for nmo, occ in zip(self.nmo_mono, self.occ_mono)]
         self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
         self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]

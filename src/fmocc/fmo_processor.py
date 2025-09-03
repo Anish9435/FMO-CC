@@ -64,7 +64,6 @@ class FMOProcessor:
         if self.config.complex_type == "covalent":
             nmo_mono = self.extractor.get_frag_nmos(self.lnum1, nfrag)
             self.config.nmo_mono = nmo_mono
-            self.logger.info(f"HEREEEEEEE!!!")
             self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
         else:
             self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
@@ -110,7 +109,7 @@ class FMOProcessor:
             mono_cc_corr.append(E_ccd)
             self.logger.info("Completed monomer calculation")
 
-        FMO_RHF = self.extractor.get_tot_rhf(self.config.complex_type)
+        FMO_RHF = self.extractor.get_tot_rhf(self.config.fmo_type)
         if self.config.fmo_type == "FMO2":
             fmo_mp2_corr = sum(dimer_mp2_corr) - (self.config.nfrag - 2) * sum(mono_mp2_corr)
             fmo_cc_corr = sum(dimer_cc_corr) - (self.config.nfrag - 2) * sum(mono_cc_corr)

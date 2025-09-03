@@ -163,9 +163,6 @@ class FMOCalculator:
             A tuple containing RHF energy, MP2 correlation energy, CC correlation
             energy, updated lnum1, and updated lnum2.
         """
-        nao = self.config.nao_dimer[comb_idx]
-        self.logger.info(f"nao: {nao}")
-        nmo = self.config.nmo_dimer[comb_idx]
         occ = self.config.occ_dimer[comb_idx]
         virt = self.config.virt_dimer[comb_idx]
         o_act = self.config.o_act_dimer[comb_idx]
@@ -181,16 +178,35 @@ class FMOCalculator:
 
         ifrag, jfrag, Erhf = self.extractor.bare_hamiltonian(lnum1, 2, hamiltonian_file)
         self.logger.info(f"Dimer ({ifrag},{jfrag}): RHF energy: {Erhf}")
-        Fock = self.extractor.get_1e_parameter(nao, hamiltonian_file)
+        #Fock = self.extractor.get_1e_parameter(nao, hamiltonian_file)
         ifrag, jfrag, Erhf, lnum2 = self.extractor.twoelecint(lnum2, 2, twoelecint_file)
         self.extractor.twoelecint_process(twoelecint_file, temp_file)
         self.extractor.bash_run()
-        twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
         ifrag, jfrag, Erhf, lnum1 = self.extractor.coeff(lnum1, 2, coeff_file)
-        coeff = self.extractor.get_coeff(nmo, nao, coeff_file)
-        hf_mo_E = self.extractor.get_orb_energy(nao, nmo, coeff_file)
-        Fock_mo = np.diag(hf_mo_E)
 
+        if self.config.complex_type == "covalent" and self.config.fmo_type == "FMO2":
+            with open(coeff_file, 'r') as infile:
+                inlines = infile.readlines()
+            nao, nmo = self.extractor._parse_nao_nmo_from_coeff(inlines)
+            self.logger.info(f"Dimer ({ifrag},{jfrag}): nao: {nao}, nmo: {nmo}")
+            self.config.nao_dimer[comb_idx] = nao
+            self.config.nmo_dimer[comb_idx] = nmo
+            virt = nmo - occ
+            self.config.virt_dimer[comb_idx] = virt if virt >= 0 else 0
+            
+            twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
+            coeff = self.extractor.get_coeff(0, 0, coeff_file)
+            hf_mo_E = self.extractor.get_orb_energy(0, 0, coeff_file)
+        else:
+            nao = self.config.nao_dimer[comb_idx]
+            nmo = self.config.nmo_dimer[comb_idx]
+            virt = self.config.virt_dimer[comb_idx]
+
+            twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
+            coeff = self.extractor.get_coeff(nmo, nao, coeff_file)
+            hf_mo_E = self.extractor.get_orb_energy(nao, nmo, coeff_file)
+        
+        Fock_mo = np.diag(hf_mo_E)
         twoelecint_mo = self._transform_2eint(coeff, twoeint)
 
         if nfo > 0:

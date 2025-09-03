@@ -1,5 +1,5 @@
 {
-  "method": "ICCSD",
+  "method": "CCSD",
   "conv": 1E-7,
   "occ_act": 3,
   "virt_act": 3,
@@ -10,10 +10,10 @@
   "frag_atom": 3,
   "elements":["1","8"],
   "atom_pattern":["8", "1", "1"],
-  "filename": "gly3_RHF_631g",
+  "filename": "water-4_RHF_621g",
   "fragment_index": [[1,6],[7,9],[10,12]],
   "icharge": [0,0,0],
   "integral_transform": "incore",
-  "fmo_type": "FMO1",
-  "complex_type": "covalent"
+  "fmo_type": "FMO2",
+  "complex_type": "non-covalent"
 }

@@ -142,7 +142,7 @@ class FMOExtractor:
             raise RuntimeError(f"Error parsing nbasis from {self.gamess_2eint}: {e}")
         return 0
 
-    def get_tot_rhf(self, complex_type):
+    def get_tot_rhf(self, fmo_type):
         """Extract the total RHF energy from GAMESS output.
 
         Returns
@@ -158,12 +158,12 @@ class FMOExtractor:
         try:
             with open(self.gamess_out, 'r') as outfile:
                 for line in outfile:
-                    if complex_type == "non-covalent":
+                    if fmo_type == "FMO2":
                         if "Total energy of the molecule: Euncorr(2)=" in line.strip():
-                            return float(line.split()[-1])
+                            return float(line.split()[-1])                       
                     else:
                         if "Total energy of the molecule: Euncorr(1)=" in line.strip():
-                            return float(line.split()[-1])                        
+                            return float(line.split()[-1])                            
             self.logger.error("Total RHF energy not found in GAMESS output")
         except Exception as e:
             raise RuntimeError(f"Error parsing RHF energy from {self.gamess_out}: {e}")
@@ -433,6 +433,51 @@ class FMOExtractor:
             outf.writelines(content)
         self.logger.info(f"Extracted two-electron integrals to {outfile3}")
         return self.ifrag, self.jfrag, self.Erhf, lnum
+        
+    def _parse_nao_nmo_from_coeff(self, lines):
+        """
+        Parse nao (rows) and nmo (columns) from a GAMESS coeff (EIGENVECTORS) block.
+        """
+        try:
+            nao = 0
+            nmo = 0
+            in_block = False
+            ao_count = 0
+            counted_nao = False
+
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    if in_block and not counted_nao and ao_count > 0:
+                        nao = ao_count
+                        counted_nao = True
+                    in_block = False
+                    ao_count = 0
+                    continue
+                parts = line.split()
+                if all(tok.isdigit() for tok in parts):
+                    if in_block and not counted_nao:
+                        nao = ao_count
+                        counted_nao = True
+                    nmo += len(parts)
+                    in_block = True
+                    ao_count = 0
+                    continue
+                
+                if in_block and parts and parts[0].isdigit():
+                    if not counted_nao:
+                        ao_count += 1
+            
+            if in_block and not counted_nao and ao_count > 0:
+                nao = ao_count
+                counted_nao = True
+            
+            if nao <= 0 or nmo <= 0:
+                raise ValueError(f"Failed to parse coeff block!!")
+
+            return nao, nmo
+        except Exception:
+            return 0, 0
 
     def get_coeff(self, nmo, nao, outfile1):
         """Read and parse molecular orbital coefficients.
@@ -453,6 +498,10 @@ class FMOExtractor:
         """
         with open(outfile1, 'r') as infile:
             inlines = infile.readlines()
+
+        if not nmo or not nao or nmo<=0 or nao<=0:
+            nao, nmo = self._parse_nao_nmo_from_coeff(inlines)
+
         elements = np.zeros((nmo,nao))
         m = 4
         idx1 = 0
@@ -525,6 +574,10 @@ class FMOExtractor:
         """
         with open(outfile1, 'r') as infile:
             inlines = infile.readlines()
+        
+        if not nmo or not nao or nmo<=0 or nao<=0:
+            nao, nmo = self._parse_nao_nmo_from_coeff(inlines)
+        
         orb_energy = []
         m = 2
         if nmo==nao:

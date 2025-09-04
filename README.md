@@ -1,9 +1,9 @@
 # 🔬 FMO-CC: Fragment Molecular Orbital with Coupled Cluster
 
 **FMO-CC** is a Python-based implementation of the Fragment Molecular Orbital (FMO) in conjunction with Coupled Cluster (CC) and second-order 
-Møller–Plesset perturbation theory (MP2) for high-accuracy quantum chemical calculations. It interfaces with **GAMESS** output files to compute 
-monomer and dimer energies, providing RHF, MP2, and CC correlation energies for molecular systems. The codebase is **modular**, **parallelizable**, 
-and designed with a robust error handling and configurability.
+Møller–Plesset perturbation theory (MP2) for high-accuracy quantum chemical calculations. It interfaces with **GAMESS** generated output files 
+to compute monomer and dimer energies, providing RHF, MP2, and CC correlation energies for molecular systems. The codebase is **modular**, 
+**parallelizable**, and designed with a robust error handling and configurability.
 
 ---
 
@@ -103,7 +103,11 @@ run_fmo_cc -c my_config.json
 ```
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
-**Note:** the covalent bonded systems support FMO1 calculation as of now.
+**Note:** For the time being, this codebase takes the GAMESS generated output files as input. Automation of fragmentation and GAMESS run is currently underway. Given the output
+files it parses the relevant parameters for the subsequent runs and provides an accurate MP2 and CC energies.
+
+**Note** Along with the conventional CCSD methodlogy, in this codebase, we have two different variants of CC theory namely, iCCSDn and iCCSDn-PT, which have computational 
+scalings at par with CCSD. The details of the theoretical development can be found [Here](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
 
 ## Project Structure
 

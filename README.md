@@ -103,11 +103,9 @@ run_fmo_cc -c my_config.json
 ```
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
-**Note:** For the time being, this codebase takes the GAMESS generated output files as input. Automation of fragmentation and GAMESS run is currently underway. Given the output
-files it parses the relevant parameters for the subsequent runs and provides an accurate MP2 and CC energies.
+**Note:** Currently, the codebase accepts GAMESS-generated output files as input. Work is in progress to automate the fragmentation process and GAMESS execution. Using the provided output files, the code extracts the relevant parameters for subsequent runs and computes accurate MP2 and CC energies.
 
-**Note** Along with the conventional CCSD methodlogy, in this codebase, we have two different variants of CC theory namely, iCCSDn and iCCSDn-PT, which have computational 
-scalings at par with CCSD. The details of the theoretical development can be found [Here](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
+**Note** In addition to the conventional CCSD methodology, this codebase implements two alternative variants of coupled-cluster theory: iCCSDn and iCCSDn-PT. Both methods exhibit computational scaling comparable to CCSD. Further details of the theoretical developments can be found [Here](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
 
 ## Project Structure
 

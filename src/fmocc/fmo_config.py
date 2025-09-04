@@ -158,10 +158,6 @@ class FMOConfig:
             self.logger.error(f"Invalid complex_type: {self.complex_type}. Must be 'covalent' or 'non-covalent'")
             raise ValueError(f"Invalid complex_type: {self.complex_type}")
         
-        #if self.complex_type == "covalent" and self.fmo_type != "FMO1":
-        #    self.logger.error("Covalent systems must use FMO1")
-        #    raise ValueError("Covalent systems must use FMO1")
-        
         if self.complex_type == "non-covalent" and not data.get("atom_pattern"):
             self.logger.warning("Non-covalent system specified but no frag_atom_patterns or atom_pattern provided")
  

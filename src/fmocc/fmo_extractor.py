@@ -1,4 +1,5 @@
 import os
+import re
 import glob
 import subprocess
 import copy as cp
@@ -81,6 +82,39 @@ class FMOExtractor:
         self.mono_key = ['iFrag', 'Iter']
         self.string_list = ['II,JST,KST,LST', 'SCHWARZ INEQUALITY']
 
+    def _safe_parse_number(self, token, is_energy=False):
+        """
+        Parse a GAMESS coefficient/energy token safely.
+    
+        Rules:
+            - Skip '***********'.
+            - If concatenated (more than one '.'), keep first float (4 decimals),
+                then insert placeholder 1e5.
+            - Otherwise, return float.
+        """
+        if '***' in token:
+            return []
+
+        if token.count('.') > 1:  # concatenated like '2.3019999999.8531'
+            match = re.match(r"([+-]?\d+\.\d{1,4})", token)
+            if match:
+                base_val = round(float(match.group(1)), 4)
+                if is_energy:
+                    self.logger.warning(f"Concatenated orbital energy '{token}' parsed as {base_val} + 1e5")
+                else:
+                    self.logger.warning(f"Concatenated coeff token '{token}' parsed as {base_val} + 1e5")
+                return [base_val, 1e5]
+            return []
+
+        try:
+            val = float(token)
+            if abs(val) > 1e4:
+                self.logger.warning(f"Oversized token '{token}' replaced by 1e5")
+                return [1e5]
+            return [val]
+        except ValueError:
+            return []
+        
     def get_enuc(self):
         """Extract nuclear repulsion energy from GAMESS output.
 
@@ -459,7 +493,11 @@ class FMOExtractor:
                     if in_block and not counted_nao:
                         nao = ao_count
                         counted_nao = True
-                    nmo += len(parts)
+                    valid_count = 0
+                    for tok in parts:
+                        if self._safe_parse_number(tok):
+                            valid_count += 1
+                    nmo += valid_count
                     in_block = True
                     ao_count = 0
                     continue
@@ -477,7 +515,7 @@ class FMOExtractor:
 
             return nao, nmo
         except Exception:
-            return 0, 0
+            return 0, 0   
 
     def get_coeff(self, nmo, nao, outfile1):
         """Read and parse molecular orbital coefficients.
@@ -502,30 +540,44 @@ class FMOExtractor:
         if not nmo or not nao or nmo<=0 or nao<=0:
             nao, nmo = self._parse_nao_nmo_from_coeff(inlines)
 
+        valid_cols = []
         elements = np.zeros((nmo,nao))
         m = 4
         idx1 = 0
+        if len(inlines) > 2:
+            parts = inlines[2].strip().split()
+            for i, tok in enumerate(parts):
+                if self._safe_parse_number(tok):
+                    valid_cols.append(i)
         if nmo == nao:
             r = nmo % 5
             q = nao // 5
             for k in range(q):
                 for i in range(5):
+                    if i not in valid_cols:
+                        continue
                     for j in range(m, m + nao):
                         idx2 = int(inlines[j].split()[0]) - 1
                         try:
                             val = inlines[j].split()[i + 4]
-                            elements[idx1, idx2] = float(val)
+                            parsed = self._safe_parse_number(val)
+                            for v in parsed:
+                                elements[idx1, idx2] = float(v)
                         except IndexError:
                             continue
                     idx1 += 1
                 m = j + 5
             for i in range(r):
+                if i not in valid_cols:
+                    continue
                 idx1 = 5 * q + i
                 for j in range(m, m + nao):
                     idx2 = int(inlines[j].split()[0]) - 1
                     try:
                         val = inlines[j].split()[i + 4]
-                        elements[idx1, idx2] = float(val)
+                        parsed = self._safe_parse_number(val)
+                        for v in parsed:
+                            elements[idx1, idx2] = float(v)
                     except IndexError:
                         continue
         else:
@@ -533,22 +585,30 @@ class FMOExtractor:
             q = nmo // 5
             for k in range(q):
                 for i in range(5):
+                    if i not in valid_cols:
+                        continue
                     for j in range(m, m + nao):
                         idx2 = int(inlines[j].split()[0]) - 1
                         try:
                             val = inlines[j].split()[i + 4]
-                            elements[idx1, idx2] = float(val)
+                            parsed = self._safe_parse_number(val)
+                            for v in parsed:
+                                elements[idx1, idx2] = float(v)
                         except IndexError:
                             continue
                     idx1 += 1
                 m = j + 5
             for i in range(r):
+                if i not in valid_cols:
+                    continue
                 idx1 = 5 * q + i
                 for j in range(m, m + nao):
                     idx2 = int(inlines[j].split()[0]) - 1
                     try:
                         val = inlines[j].split()[i + 4]
-                        elements[idx1, idx2] = float(val)
+                        parsed = self._safe_parse_number(val)
+                        for v in parsed:
+                            elements[idx1, idx2] = float(v)
                     except IndexError:
                         continue
         elements = np.transpose(elements)
@@ -587,8 +647,10 @@ class FMOExtractor:
                 for i in range(5):
                     for j in range(m,m+1):
                         try:
-                           val = float(inlines[j].split()[i])
-                           orb_energy.append(val)
+                            val = inlines[j].split()[i]
+                            parsed = self._safe_parse_number(val, is_energy=True)
+                            for v in parsed:
+                                orb_energy.append(float(v))
                         except IndexError:
                            continue
                 m = j+nao+4
@@ -596,8 +658,10 @@ class FMOExtractor:
                 idx1 = 5*q+i
                 for j in range(m,m+1):
                     try:
-                        val = float(inlines[j].split()[i])
-                        orb_energy.append(val)
+                        val = inlines[j].split()[i]
+                        parsed = self._safe_parse_number(val, is_energy=True)
+                        for v in parsed:
+                            orb_energy.append(float(v))
                     except IndexError:
                         continue
         else:
@@ -607,8 +671,10 @@ class FMOExtractor:
                 for i in range(5):
                     for j in range(m,m+1):
                         try:
-                           val = float(inlines[j].split()[i])
-                           orb_energy.append(val)
+                            val = inlines[j].split()[i]
+                            parsed = self._safe_parse_number(val, is_energy=True)
+                            for v in parsed:
+                                orb_energy.append(float(v))
                         except IndexError:
                            continue
                 m = j+nao+4
@@ -616,8 +682,10 @@ class FMOExtractor:
                 idx1 = 5*q+i
                 for j in range(m,m+1):
                     try:
-                        val = float(inlines[j].split()[i])
-                        orb_energy.append(val)
+                        val = inlines[j].split()[i]
+                        parsed = self._safe_parse_number(val, is_energy=True)
+                        for v in parsed:
+                            orb_energy.append(float(v))
                     except IndexError:
                         continue
         orb_energy = np.array(orb_energy)

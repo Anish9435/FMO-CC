@@ -111,7 +111,7 @@ run_fmo_cc -c my_config.json
 
 ```text
 FMO-CC/
-├── src/                             # Source root (used for editable install)
+├── src/                             # Source root
 │   └── fmocc/                       # Main Python package
 │       ├── __init__.py
 │       ├── __main__.py              # Enables `python -m fmocc` execution

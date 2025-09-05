@@ -1,5 +1,15 @@
 # 🔬 FMO-CC: Fragment Molecular Orbital with Coupled Cluster
 
+## 🌟 Executive Summary  
+**FMO-CC** is a Python package for **fragment-based quantum chemistry calculations**, combining the **Fragment Molecular Orbital (FMO)** method 
+with **Coupled Cluster (CC)** and **MP2**.  It is designed to scale quantum chemical calculations to **larger molecular systems** by partitioning 
+them into fragments while retaining **chemical accuracy**.  
+
+With **seamless integration with GAMESS**, automated orbital selection, parallel execution, and a **configurable JSON workflow**, FMO-CC provides 
+a **research-grade, reproducible, and extensible framework** for electronic structure calculations.
+
+---
+
 **FMO-CC** is a Python-based implementation of the Fragment Molecular Orbital (FMO) in conjunction with Coupled Cluster (CC) and second-order 
 Møller–Plesset perturbation theory (MP2) for high-accuracy quantum chemical calculations. It interfaces with **GAMESS** generated output files 
 to compute monomer and dimer energies, providing RHF, MP2, and CC correlation energies for molecular systems. The codebase is **modular**, 

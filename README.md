@@ -7,31 +7,36 @@ to compute monomer and dimer energies, providing RHF, MP2, and CC correlation en
 
 ---
 
-## Key Features
+## 🚀 Key Features
 
 ### **Quantum Chemistry Methods**
- - FMO-based RHF, MP2, and CC (CCSD, ICCSD, ICCSD-PT) calculations
- - Support for frozen occupied/virtual orbital simulations
- - Supports both one-body FMO (FMO1) and two-body FMO (FMO2) calculations
+ - Fragment Molecular Orbital (FMO) framework supporting RHF, MP2, and CC methods (CCSD, ICCSD, ICCSD-PT)
+ - Configurable frozen occupied and virtual orbital treatments
+ - Flexible support for both FMO1 (one-body) and FMO2 (two-body) calculations
+
+### **Selection of active orbitals**
+ - Automated detection of **chemically relevant orbitals** based on HOMO–LUMO proximity
+ - User-controlled overrides via input file for fine-grained orbital specification
 
 ### **Parallelization**
- - Multiprocessing for parallel CC iterations
- - Scalable design for larger molecular systems
+ - Multiprocessing-enabled CC iterations for high-throughput simulations
+ - Scalable architecture designed to handle large and complex molecular systems efficiently
 
 ### **Integration with GAMESS**
- - Automatic extraction of integrals, MO coefficients, and orbital data from GAMESS outputs
- - Compatibility with .dat and _2eint.dat files
+ - Automated parsing of GAMESS outputs for integrals, MO coefficients, and orbital energies
+ - Full compatibility with standard GAMESS output formats (`.dat` for coeffients, orbitals, `_2eint.dat` for 2e integrals)
 
 ### **Configurable Input**
- - Easy-to-use JSON input file (input.json) for parameters and workflow control
+ - Intuitive JSON-based configuration (`input.json`) for workflow setup and parameter control
 
 ### **Robust Logging & Reproducibility**
- - Rotating log files for reproducibility, debugging, and traceability
+ - Structured, rotating log files capturing all computational steps
+ - Designed for debugging, reproducibility, and auditability in research and production workflows
 
 ---
 
 
-## Installation
+## ⚙️ Installation
 
 ```bash
 git clone https://github.com/Anish9435/FMO-CC.git
@@ -48,7 +53,7 @@ source fmocc_env/bin/activate
 ```
 And then follow the `Quick start` section to run the scripts
 
-## Quick Start
+## ▶️ Quick Start
 
 Run the codebase using the launcher script:
 
@@ -78,7 +83,7 @@ run_fmo_cc
 run_fmo_cc -c my_config.json
 ```
 
-## Configuration file input options
+## 📝 Configuration file input options
 
 ```text
 |      Flag / Key         |                          Description                                     |
@@ -107,9 +112,10 @@ run_fmo_cc -c my_config.json
 
 **Note:** Currently, the codebase accepts GAMESS-generated output files as input. Work is in progress to automate the fragmentation process and GAMESS execution. Using the provided output files, the code extracts the relevant parameters for subsequent runs and computes accurate MP2 and CC energies.
 
-**Note** In addition to the conventional CCSD methodology, this codebase implements two alternative variants of coupled-cluster theory: iCCSDn and iCCSDn-PT. Both methods exhibit computational scaling comparable to CCSD. Further details of the theoretical developments can be found [Here](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
+**Note** In addition to conventional CCSD, two alternative variants are implemented: iCCSDn and iCCSDn-PT, both with comparable scaling to CCSD. Details: 
+[A double exponential Coupled Cluster Theory](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
 
-## Project Structure
+## 📂 Project Structure
 
 ```text
 FMO-CC/

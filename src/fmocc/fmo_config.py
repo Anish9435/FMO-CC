@@ -163,6 +163,8 @@ class FMOConfig:
  
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)
+        self.auto_active = data.get("auto_active", True)
+        self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)
         self.frag_atom = data.get("frag_atom", 3)
@@ -240,20 +242,35 @@ class FMOConfig:
             nmer = [int(natoms_i / self.frag_atom) for natoms_i in natoms]
         else:
             nmer = [1] * self.nfrag
-        self.o_act_mono = [self.o_act * nmer_i for nmer_i in nmer]
-        self.v_act_mono = [self.v_act * nmer_i for nmer_i in nmer]
+        if not self.auto_active:
+            self.o_act_mono = [self.o_act * nmer_i for nmer_i in nmer]
+            self.v_act_mono = [self.v_act * nmer_i for nmer_i in nmer]
+            if self.complex_type == "covalent":
+                self.o_act_dimer = [self.o_act_mono[i] + self.o_act_mono[j] for i, j in combinations(range(self.nfrag), 2)]
+                self.v_act_dimer = [self.v_act_mono[i] + self.v_act_mono[j] for i, j in combinations(range(self.nfrag), 2)]
+            else:        
+                self.o_act_dimer = [sum(combo) for combo in combinations(self.o_act_mono, 2)]
+                self.v_act_dimer = [sum(combo) for combo in combinations(self.v_act_mono, 2)]
+        else:
+            self.logger.info("Auto active orbitals selection is enabled; manual o_act and v_act settings will be ignored")
+            self.o_act_mono = [0] * self.nfrag
+            self.v_act_mono = [0] * self.nfrag
+            self.o_act_dimer = [0] * ndimer
+            self.v_act_dimer = [0] * ndimer
+        
         self.nfo_mono = [self.nfo * nmer_i for nmer_i in nmer]
         self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]
-        self.o_act_dimer = [sum(combo) for combo in combinations(self.o_act_mono, 2)]
-        self.v_act_dimer = [sum(combo) for combo in combinations(self.v_act_mono, 2)]
         self.nfo_dimer = [sum(combo) for combo in combinations(self.nfo_mono, 2)]
         self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
+        
         self.nao_dimer.sort()
         self.nmo_dimer.sort()
         self.occ_dimer.sort()
         self.virt_dimer.sort()
-        self.o_act_dimer.sort()
-        self.v_act_dimer.sort()
+        if self.o_act_dimer:
+            self.o_act_dimer.sort()
+        if self.v_act_dimer:
+            self.v_act_dimer.sort()
         self.nfo_dimer.sort()
         self.nfv_dimer.sort()
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")  # CHANGE: Logging update
@@ -264,6 +281,76 @@ class FMOConfig:
         self.logger.info(f"Number of frozen occupied orbitals for dimer: {self.nfo_dimer} and for monomer: {self.nfo_mono}")
         self.logger.info(f"Number of frozen virtual orbitals for dimer: {self.nfv_dimer} and for monomer: {self.nfv_mono}")
         self.logger.info(f"Total number of electrons in fragments: {self.frag_elec}")
+
+    def auto_set_active_orbitals(self, idx: int, hf_mo_E: List[float], occ: int, virt: int, threshold: float, is_dimer: bool = False) -> None:
+        """
+        Automatically determine active orbitals for a fragment based on orbital energies and threshold closeness to HOMO/LUMO.
+
+        Parameters
+        ----------
+        frag_idx : int
+            Fragment index
+        hf_mo_E : List[float]
+            Orbital energies for the fragment
+        occ : int
+            Number of occupied orbitals
+        virt : int
+            Number of virtual orbitals
+        """
+        if not self.auto_active:
+            return  # stick to manual config
+
+        thr = threshold if threshold is not None else self.active_threshold
+
+        if hf_mo_E is None or len(hf_mo_E) == 0:
+            self.logger.warning(f"{'Dimer' if is_dimer else 'Fragment'} {idx+1}: empty orbital energy list; skipping auto active selection")
+            return
+
+        total_mos = len(hf_mo_E)
+        occ_count = min(max(int(occ), 0), total_mos)
+        virt_count = max(total_mos - occ_count, 0)
+
+        occ_energies = hf_mo_E[:occ_count] if occ_count > 0 else []
+        virt_energies = hf_mo_E[occ_count:] if virt_count > 0 else []
+
+        homo_e = occ_energies[-1] if len(occ_energies) > 0 else None
+        lumo_e = virt_energies[0] if len(virt_energies) > 0 else None
+
+        # Active occupied orbitals: within threshold below HOMO
+        if homo_e is not None:
+            o_act_list = [e for e in occ_energies if (homo_e - e) <= thr]
+            o_act = len(o_act_list)
+        else:
+            o_act_list, o_act = [], 0
+
+        # Active virtual orbitals: within threshold above LUMO
+        if lumo_e is not None:
+            v_act_list = [e for e in virt_energies if (e - lumo_e) <= thr]
+            v_act = len(v_act_list)
+        else:
+            v_act_list, v_act = [], 0
+
+        if idx < 0 or idx >= (len(self.o_act_dimer) if is_dimer else self.nfrag):
+            self.logger.error(f"Fragment index {idx} out of range (nfrag={self.nfrag})")
+            return
+
+        if is_dimer:
+            self.o_act_dimer[idx] = o_act
+            self.v_act_dimer[idx] = v_act
+            entity = "Dimer"
+        else:
+            self.o_act_mono[idx] = o_act
+            self.v_act_mono[idx] = v_act
+            entity = "Fragment"
+
+        self.logger.info(
+            f"[Auto-active] {entity} {idx+1}: "
+            f"HOMO={homo_e if homo_e is not None else 'N/A'}, "
+            f"LUMO={lumo_e if lumo_e is not None else 'N/A'}, "
+            f"thr={thr:.6f}, "
+            f"o_act={o_act} (energies {o_act_list}), "
+            f"v_act={v_act} (energies {v_act_list})"
+        )
 
     def _compute_frag_elec(self, occ_mono: List[int]) -> List[int]:
         """Compute the number of electrons in each fragment.

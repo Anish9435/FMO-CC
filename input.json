@@ -1,6 +1,8 @@
 {
-  "method": "CCSD",
+  "method": "ICCSD-PT",
   "conv": 1E-7,
+  "auto_active": true,
+  "active_threshold": 0.6,
   "occ_act": 3,
   "virt_act": 3,
   "nfo": 0,

@@ -104,8 +104,6 @@ class FMOCalculator:
         nmo = self.config.nmo_mono[frag_idx]
         occ = self.config.occ_mono[frag_idx]
         virt = self.config.virt_mono[frag_idx]
-        o_act = self.config.o_act_mono[frag_idx]
-        v_act = self.config.v_act_mono[frag_idx]
         nfo = self.config.nfo_mono[frag_idx]
         nfv = self.config.nfv_mono[frag_idx]
         self.logger.info(f"Monomer {ifrag}: RHF energy: {Erhf} with nao: {nao}")
@@ -133,7 +131,7 @@ class FMOCalculator:
                 pad_vals = np.full(n_missing, 1.0e5)
                 hf_mo_E = np.concatenate([hf_mo_E, pad_vals])
                 trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 2)
-                nfv = max(n_missing, trailing_bad)
+                #nfv = max(n_missing, trailing_bad)
                 self.logger.info(f"Monomer {ifrag}: padded {n_missing} redundant orbitals as frozen")
         else:
             nao = self.config.nao_mono[frag_idx]
@@ -144,6 +142,16 @@ class FMOCalculator:
             coeff = self.extractor.get_coeff(nmo, nao, coeff_file)
             hf_mo_E = self.extractor.get_orb_energy(nao, nmo, coeff_file)
 
+        if self.config.auto_active:
+            self.logger.info(f"Auto selecting active orbitals for monomer {ifrag}")
+            self.config.auto_set_active_orbitals(frag_idx, hf_mo_E, occ, virt, self.config.active_threshold)
+            o_act = self.config.o_act_mono[frag_idx]
+            v_act = self.config.v_act_mono[frag_idx]
+        else:
+            self.logger.info(f"Using manual active orbitals for monomer {ifrag}")
+            o_act = self.config.o_act_mono[frag_idx]
+            v_act = self.config.v_act_mono[frag_idx]
+        
         Fock_mo = np.diag(hf_mo_E)
         self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape}")
         twoelecint_mo = self._transform_2eint(coeff, twoeint)
@@ -193,8 +201,6 @@ class FMOCalculator:
         """
         occ = self.config.occ_dimer[comb_idx]
         virt = self.config.virt_dimer[comb_idx]
-        o_act = self.config.o_act_dimer[comb_idx]
-        v_act = self.config.v_act_dimer[comb_idx]
         nfo = self.config.nfo_dimer[comb_idx]
         nfv = self.config.nfv_dimer[comb_idx]
 
@@ -236,7 +242,17 @@ class FMOCalculator:
             twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
             coeff = self.extractor.get_coeff(nmo, nao, coeff_file)
             hf_mo_E = self.extractor.get_orb_energy(nao, nmo, coeff_file)
-        
+
+        if self.config.auto_active:
+            self.logger.info(f"Auto selecting active orbitals for Dimer ({ifrag}, {jfrag})")
+            self.config.auto_set_active_orbitals(comb_idx, hf_mo_E, occ, virt, self.config.active_threshold, is_dimer=True)
+            o_act = self.config.o_act_dimer[comb_idx]
+            v_act = self.config.v_act_dimer[comb_idx]
+        else:
+            self.logger.info(f"Using manual active orbitals for Dimer ({ifrag}, {jfrag})")
+            o_act = self.config.o_act_dimer[comb_idx]
+            v_act = self.config.v_act_dimer[comb_idx]
+
         Fock_mo = np.diag(hf_mo_E)
         self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape}")
         twoelecint_mo = self._transform_2eint(coeff, twoeint)
@@ -253,6 +269,7 @@ class FMOCalculator:
         So, Do = self.mp2_calc.guess_so(occ, virt, nmo, o_act, hf_mo_E, twoelecint_mo)
         Sv, Dv = self.mp2_calc.guess_sv(occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo)
         E_mp2, E_mp2_tot = self.mp2_calc.MP2_energy(occ, nao, t2, twoelecint_mo, Erhf)
+        self.logger.info(f"occ: {occ}, virt: {virt}, o_act: {o_act}, v_act: {v_act}")
         self.logger.info(f"t1 shape: {t1.shape}, t2 shape: {t2.shape}, So shape: {So.shape}, Sv shape: {Sv.shape}")
         self.logger.info(f"Dimer {ifrag, jfrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 

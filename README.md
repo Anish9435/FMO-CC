@@ -85,6 +85,8 @@ run_fmo_cc -c my_config.json
 |-------------------------|--------------------------------------------------------------------------|
 | `method`                | Correlated method: `ICCSD`, `ICCSD-PT`, `CCSD`                           |
 | `conv`                  | Convergence threshold for CC iterations (e.g., `1e-7`)                   |
+| `auto_active`           | automatically determine active orbs from HOMO/LUMO (`true` or `false`)   |
+| `active_threshold`      | Energy window (in Hartree) around HOMO/LUMO for auto-active selection    |
 | `occ_act`               | Number of active occupied orbitals                                       |
 | `virt_act`              | Number of active virtual orbitals                                        |
 | `nfo`                   | Number of frozen occupied orbitals                                       |

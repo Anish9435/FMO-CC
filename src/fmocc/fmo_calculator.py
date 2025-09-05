@@ -40,7 +40,7 @@ class FMOCalculator:
         self.extractor = extractor
         self.processor = processor
         self.mp2_calc = MP2Calculator()
-        self.cc_parallel = CCParallel()
+        self.cc_parallel = CCParallel(self.config.nproc)
 
     def _transform_2eint(self, coeff, twoeint):
         """Transform two-electron integrals from AO to MO basis.

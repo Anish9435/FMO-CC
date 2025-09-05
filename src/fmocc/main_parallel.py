@@ -1,6 +1,6 @@
 import copy as cp
 import numpy as np
-from multiprocessing import Pool
+from multiprocessing import Pool, cpu_count
 from .diagrams import DiagramBuilder
 from .utils import Symmetrizer, AmplitudeUpdater, FMOCC_LOGGER
 
@@ -21,11 +21,12 @@ class CCParallel:
     symmetrizer : Symmetrizer
         Object for symmetrizing residuals.
     """
-    def __init__(self):
+    def __init__(self, nproc: int = None):
         self.logger = FMOCC_LOGGER
         self.diagram_builder = DiagramBuilder()
         self.amplitude_updater = AmplitudeUpdater()
         self.symmetrizer = Symmetrizer()
+        self.nproc = nproc if nproc and nproc > 0 else cpu_count()
 
     def energy_ccd(self, occ, nao, t2, twoelecint_mo):
         """Compute CCD correlation energy.
@@ -194,7 +195,7 @@ class CCParallel:
         for x in range(n_iter):
             if calc == 'CCSD':
                 self.logger.info(f"|| -------------- CCSD --------------- ||")
-                pool = Pool(12)
+                pool = Pool(self.nproc)
                 tau = cp.deepcopy(t2) 
                 tau += np.einsum('ia,jb->ijab', t1, t1)
                 result_comb_temp1 = pool.apply_async(self.diagram_builder.update1, args=(occ,nao,t1,t2,tau,Fock_mo,twoelecint_mo,))
@@ -236,12 +237,9 @@ class CCParallel:
 
             if calc == 'ICCSD':
                 self.logger.info(f"|| -------------- ICCSD --------------- ||")
-                pool=Pool(12)
+                pool = Pool(self.nproc)
                 tau = cp.deepcopy(t2)
                 tau += np.einsum('ia,jb->ijab',t1,t1)
-            
-                II_oo = self.diagram_builder.So_int_diagrams(occ,o_act,nao,So,t2,twoelecint_mo)[1]
-                II_vv = self.diagram_builder.Sv_int_diagrams(occ,virt,v_act,nao,Sv,t2,twoelecint_mo)[1]
             
                 result_comb_temp1 = pool.apply_async(self.diagram_builder.update1,args=(occ,nao,t1,t2,tau,Fock_mo,twoelecint_mo,))
                 result_comb_temp2 = pool.apply_async(self.diagram_builder.update2,args=(occ,nao,t1,tau,twoelecint_mo,))
@@ -277,15 +275,7 @@ class CCParallel:
                 R_ijab = self.symmetrizer.symmetrize(occ,virt,R_ijab)
             
                 R_iuab = R_iuab_temp.get()
-                #R_iuab += diagrams.T1_contribution_Sv(occ,nao,v_act,t1,twoelecint_mo)
-                #R_iuab += diagrams.coupling_terms_So(So,t2)[0]
-                #R_iuab += diagrams.w2_int_2(So,Sv,t2)
-
                 R_ijav = R_ijav_temp.get() 
-                #R_ijav += diagrams.T1_contribution_So(occ,nao,o_act,t1,twoelecint_mo)
-                #R_ijav += diagrams.coupling_terms_Sv(Sv,t2)[0]
-                #R_ijav += diagrams.w2_int_1(So,Sv,t2)
-            
             
                 eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia,R_ijab,t1,t2,D1,D2)
                 eps_So, So = self.amplitude_updater.update_So(R_ijav,So,Do,conv)
@@ -300,7 +290,7 @@ class CCParallel:
                     
             if calc == 'ICCSD-PT':
                 self.logger.info(f"|| -------------- ICCSD-PT --------------- ||")
-                pool=Pool(12)
+                pool = Pool(self.nproc)
                 tau = cp.deepcopy(t2)
                 tau += np.einsum('ia,jb->ijab',t1,t1)
             

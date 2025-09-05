@@ -160,7 +160,8 @@ class FMOConfig:
         
         if self.complex_type == "non-covalent" and not data.get("atom_pattern"):
             self.logger.warning("Non-covalent system specified but no frag_atom_patterns or atom_pattern provided")
- 
+
+        self.nproc = int(data.get("nproc", 0))
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)
         self.auto_active = data.get("auto_active", True)

@@ -1,6 +1,7 @@
 {
   "method": "ICCSD-PT",
   "conv": 1E-7,
+  "nproc": 8,
   "auto_active": true,
   "active_threshold": 0.6,
   "occ_act": 3,

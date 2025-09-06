@@ -98,7 +98,6 @@ run_fmo_cc -c my_config.json
 | `active_threshold`      | Energy window (in Hartree) around HOMO/LUMO for auto-active selection    |
 | `occ_act`               | Number of active occupied orbitals (used only if `auto_active=false`)    |
 | `virt_act`              | Number of active virtual orbitals (used only if `auto_active=false`)     |
-| `freeze_core`           | Freeze core orbitals during calculation (`true` or `false`)              |
 | `nfo`                   | Number of frozen occupied orbitals                                       |
 | `nfv`                   | Number of frozen virtual orbitals                                        |
 | `basis_set`             | Basis set to use (e.g., `6-21g`, `cc-pVDZ`, etc.)                        |
@@ -119,9 +118,6 @@ run_fmo_cc -c my_config.json
 
 **Note** In addition to conventional CCSD, two alternative variants are implemented: iCCSDn and iCCSDn-PT, both with comparable scaling to CCSD. Details: 
 [A double exponential Coupled Cluster Theory](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
-
-**Additional Note** Regarding frozen orbitals: When `freeze_core` is set to `true` and `nfo=null` in your JSON configuration, the code automatically determines the number of frozen 
-occupied orbitals based on the element types present in the system. Users can manually control frozen orbitals by setting nfo to an integer value and nfv to the desired number. 
 
 ## 📂 Project Structure
 

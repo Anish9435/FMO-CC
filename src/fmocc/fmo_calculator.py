@@ -126,13 +126,11 @@ class FMOCalculator:
             twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
             hf_mo_E = self.extractor.get_orb_energy(0, 0, coeff_file)
             coeff = self.extractor.get_coeff(0, 0, coeff_file)
+            n_missing = 0
             if len(hf_mo_E) < coeff.shape[1]:
                 n_missing = coeff.shape[1] - len(hf_mo_E)
                 pad_vals = np.full(n_missing, 1.0e5)
                 hf_mo_E = np.concatenate([hf_mo_E, pad_vals])
-                trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 2)
-                #nfv = max(n_missing, trailing_bad)
-                self.logger.info(f"Monomer {ifrag}: padded {n_missing} redundant orbitals as frozen")
         else:
             nao = self.config.nao_mono[frag_idx]
             nmo = self.config.nmo_mono[frag_idx]
@@ -152,8 +150,11 @@ class FMOCalculator:
             o_act = self.config.o_act_mono[frag_idx]
             v_act = self.config.v_act_mono[frag_idx]
         
+        trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 1e4)
+        nfv = max(n_missing, trailing_bad)
+        self.logger.info(f"Monomer {ifrag}: padded {n_missing} redundant orbitals as frozen")
         Fock_mo = np.diag(hf_mo_E)
-        self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape}")
+        self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape} and virtual frozen: {nfv}")
         twoelecint_mo = self._transform_2eint(coeff, twoeint)
 
         if nfo > 0:
@@ -229,6 +230,7 @@ class FMOCalculator:
             twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
             hf_mo_E = self.extractor.get_orb_energy(0, 0, coeff_file)
             coeff = self.extractor.get_coeff(0, 0, coeff_file)
+            n_missing = 0
             if len(hf_mo_E) < coeff.shape[1]:
                 n_missing = coeff.shape[1] - len(hf_mo_E)
                 pad_vals = np.full(n_missing, 1.0e5)
@@ -253,14 +255,17 @@ class FMOCalculator:
             o_act = self.config.o_act_dimer[comb_idx]
             v_act = self.config.v_act_dimer[comb_idx]
 
+        trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 1e4)
+        nfv = max(n_missing, trailing_bad)
+        self.logger.info(f"Dimer ({ifrag}, {jfrag}): padded {n_missing} redundant orbitals as frozen")
         Fock_mo = np.diag(hf_mo_E)
-        self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape}")
+        self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape} and virtual frozen: {nfv}")
         twoelecint_mo = self._transform_2eint(coeff, twoeint)
 
         if nfo > 0:
             occ, nmo, twoelecint_mo, Fock_mo, hf_mo_E = self.mp2_calc.occ_frozen(occ, nmo, nfo, twoelecint_mo, Fock_mo, hf_mo_E)
         if nfv > 0:
-            nao, nmo, virt, twoelecint_mo, Fock_mo, hf_mo_E = self.mp2_calc.virt_frozen(virt, nmo, nfo, nfv, nao, twoelecint_mo, Fock_mo, hf_mo_E)
+            _, nmo, virt, twoelecint_mo, Fock_mo, hf_mo_E = self.mp2_calc.virt_frozen(virt, nmo, nfo, nfv, nao, twoelecint_mo, Fock_mo, hf_mo_E)
 
         self.logger.info(f"Orbital energies: {hf_mo_E}")
         self.logger.info(f"Dimer ({ifrag}, {jfrag}): nao: {nao}, nmo: {nmo}")

@@ -221,13 +221,11 @@ class FMOConfig:
         self.nfrag = nfrag
         self.nao_mono = nao_mono
         ndimer = len(list(combinations(range(self.nfrag), 2)))
-        #self.nao_dimer = [sum(combo) for combo in combinations(self.nao_mono, 2)]
         self.nao_dimer = [0] * ndimer if (self.complex_type == "covalent" and self.fmo_type == "FMO2") else [sum(combo) for combo in combinations(self.nao_mono, 2)]
         if hasattr(self, "nmo_mono") and self.nmo_mono:
             self.nmo_mono = self.nmo_mono
         else:
             self.nmo_mono = self.nao_mono[:]
-        #self.nmo_dimer = self.nao_dimer[:]
         self.nmo_dimer = [0] * len(self.nao_dimer) if (self.complex_type == "covalent" and self.fmo_type == "FMO2") else self.nao_dimer[:]
         self.frag_elec = self._compute_frag_elec(occ_mono)
         self.occ_mono = occ_mono if self.complex_type == "covalent" else [int(e // 2) for e in self.frag_elec]
@@ -276,7 +274,7 @@ class FMOConfig:
         self.nfv_dimer.sort()
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")  # CHANGE: Logging update
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
-        self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
+        self.logger.info(f"Number of virtual orbitals for monomer: {self.virt_mono}")
         self.logger.info(f"Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")
         self.logger.info(f"Active virtual orbitals for dimer: {self.v_act_dimer} and for monomer: {self.v_act_mono}")
         self.logger.info(f"Number of frozen occupied orbitals for dimer: {self.nfo_dimer} and for monomer: {self.nfo_mono}")
@@ -299,7 +297,7 @@ class FMOConfig:
             Number of virtual orbitals
         """
         if not self.auto_active:
-            return  # stick to manual config
+            return
 
         thr = threshold if threshold is not None else self.active_threshold
 
@@ -387,6 +385,5 @@ class FMOConfig:
                 atoms = [pattern[i % len(pattern)] for i in range(length)]
                 frag_elec = sum(elec_map[a] for a in atoms)
                 result.append(frag_elec)
-
         self.logger.info(f"Computed fragment electrons: {result}")
         return result

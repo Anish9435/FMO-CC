@@ -192,6 +192,7 @@ class CCParallel:
         ValueError
             If the calculation method is not 'CCSD' or 'ICCSD-PT'.
         """
+        self.logger.info(f"Starting {calc} calculation with {self.nproc} processors")
         for x in range(n_iter):
             if calc == 'CCSD':
                 self.logger.info(f"|| -------------- CCSD --------------- ||")

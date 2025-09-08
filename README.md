@@ -88,7 +88,6 @@ run_fmo_cc -c my_config.json
 
 ## 📝 Configuration file input options
 
-```text
 |      Flag / Key         |                          Description                                     |
 |-------------------------|--------------------------------------------------------------------------|
 | `method`                | Correlated method: `ICCSD`, `ICCSD-PT`, `CCSD`                           |
@@ -112,7 +111,8 @@ run_fmo_cc -c my_config.json
 | `integral_transform`    | Mode for integral transformation: `incore` or `disk`                     |
 | `fmo_type`              | Fragment Molecular Orbital type: `FMO1`, `FMO2`, etc.                    |
 | `complex_type`          | specification of the complex: `covalent`, `non-covalent`, etc.           |
-```
+
+
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
 **Note:** Currently, the codebase accepts GAMESS-generated output files as input. Work is in progress to automate the fragmentation process and GAMESS execution. Using the provided output files, the code extracts the relevant parameters for subsequent runs and computes accurate MP2 and CC energies.

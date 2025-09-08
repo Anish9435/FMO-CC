@@ -119,6 +119,7 @@ run_fmo_cc -c my_config.json
 
 **Note** In addition to conventional CCSD, two alternative variants are implemented: iCCSDn and iCCSDn-PT, both with comparable scaling to CCSD. Details: 
 [A double exponential Coupled Cluster Theory](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)
+And the original development article for iCCSDn methodology can be found: [iCCSDn Methodology](https://pubs.acs.org/doi/abs/10.1021/acs.jctc.0c00736)
 
 ## 📂 Project Structure
 

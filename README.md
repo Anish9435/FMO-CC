@@ -106,6 +106,7 @@ run_fmo_cc -c my_config.json
 | `elements`              | List of atomic numbers present in the system                             |
 | `atom_pattern`          | Atom sequence pattern defining fragments                                 |
 | `filename`              | Base filename for GAMESS outputs (`.dat` and `_2eint.dat`)               |
+| `data_dir`              | Path to directory containing GAMESS output files                         |
 | `fragment_index`        | Explicit fragment index ranges (for custom/nonstandard fragmentation)    |
 | `icharge`               | List of charges for each fragment                                        |
 | `integral_transform`    | Mode for integral transformation: `incore` or `disk`                     |

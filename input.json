@@ -1,7 +1,7 @@
 {
   "method": "ICCSD-PT",
   "conv": 1E-7,
-  "nproc": 8,
+  "nproc": 0,
   "auto_active": true,
   "active_threshold": 0.6,
   "occ_act": 3,
@@ -13,10 +13,11 @@
   "frag_atom": 3,
   "elements":["1","8"],
   "atom_pattern":["8", "1", "1"],
-  "filename": "gly3_RHF_631g",
+  "filename": "water-4_RHF_621g",
+  "data_dir": "/home/qc_anish/FMO_CC/data/",
   "fragment_index": [[1,6],[7,9],[10,12]],
   "icharge": [0,0,0],
   "integral_transform": "incore",
-  "fmo_type": "FMO1",
+  "fmo_type": "FMO2",
   "complex_type": "covalent"
 }

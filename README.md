@@ -138,6 +138,10 @@ FMO-CC/
 │       ├── diagrams.py              # Diagrammatic CC expansions
 │       └── utils.py                 # Logging, helpers, and cache management
 │
+├── data/                            # directory containing the data files of GAMESS
+│   ├── filename.dat                 # output file containing the fock, coefficients     
+│   └── filename_2eint.dat           # output file containing the 2-electron integrals
+│
 ├── Scripts/                         # CLI scripts and execution helpers
 │   ├── run_fmo_cc.py                # Main launcher for FMO-CC calculations
 │   ├── run_gamess.sh                # Wrapper script for GAMESS runs

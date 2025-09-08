@@ -8,7 +8,7 @@ from fmocc.utils import HelperFunction, FMOCC_LOGGER
 def main():
     parser = argparse.ArgumentParser(description="Run FMO-CC calculation")
     parser.add_argument("-c", "--config", default="input.json", help="Path to input JSON configuration")
-    parser.add_argument("-d", "--data_dir", default="data/", help="Path to data directory")
+    parser.add_argument("-d", "--data_dir", default=None, help="Path to data directory")
     args = parser.parse_args()
 
     config_file = os.path.abspath(args.config)
@@ -20,7 +20,10 @@ def main():
     
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     default_data_dir = os.path.join(repo_root, "data")
-    data_dir = args.data_dir or config_json.get("data_dir", default_data_dir)
+    if args.data_dir:
+        data_dir = os.path.abspath(args.data_dir)
+    else:
+        data_dir = os.path.abspath(config_json.get("data_dir", default_data_dir))
 
     try:
         processor = FMOProcessor(config_file, base_dir=data_dir)

@@ -28,8 +28,8 @@ def main():
     try:
         processor = FMOProcessor(config_file, base_dir=data_dir)
         E_cc, E_cc_tot = processor.run()
-        logger.info(f"CC Correlation Energy: {E_cc:.9f}")
-        logger.info(f"Total CC Energy: {E_cc_tot:.9f}")
+        logger.info(f"{processor.config.method} Correlation Energy: {E_cc:.9f}")
+        logger.info(f"Total {processor.config.method} Energy: {E_cc_tot:.9f}")
 
         fmocc_dir = os.path.dirname(__file__)
         logger.info(f"Clearing __pycache__ in directory: {fmocc_dir}")

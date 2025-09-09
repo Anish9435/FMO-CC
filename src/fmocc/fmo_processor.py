@@ -1,3 +1,4 @@
+from math import comb
 import os
 import time
 import tempfile
@@ -88,54 +89,56 @@ class FMOProcessor:
         - Measures and logs the total execution time.
         """
         start = time.time()
-        mono_rhf, mono_mp2_corr, mono_cc_corr = [], [], []
-        dimer_rhf, dimer_mp2_corr, dimer_cc_corr = [], [], []
-        comb = []
+        mono_rhf, mono_mp2_corr = [], []
+        dimer_rhf, dimer_mp2_corr = [], []
+        mono_cc_corr = {}
+        dimer_pairs = {}
         lnum1, lnum2 = self.lnum1, self.lnum2
         
         if self.config.fmo_type == "FMO2":
             seq = [i for i in range(self.config.nfrag)]
             comb = list(combinations(seq, 2))
             for idx, (i, j) in enumerate(comb):
-                Erhf, E_mp2, E_ccd, lnum1, lnum2 = self.calculator.compute_dimer(idx, i, j, lnum1, lnum2)
+                Erhf, E_mp2, E_ccd, lnum1, lnum2, fi, fj = self.calculator.compute_dimer(idx, i, j, lnum1, lnum2)
                 dimer_rhf.append(Erhf)
                 dimer_mp2_corr.append(E_mp2)
-                dimer_cc_corr.append(E_ccd)
+                dimer_pairs[(fi, fj)] = E_ccd
                 self.logger.info("Completed dimer calculation")
 
         for i in range(self.config.nfrag):
-            Erhf, E_mp2, E_ccd, lnum1, lnum2 = self.calculator.compute_monomer(i, lnum1, lnum2)
+            Erhf, E_mp2, E_ccd, lnum1, lnum2, frag_id = self.calculator.compute_monomer(i, lnum1, lnum2)
             mono_rhf.append(Erhf)
             mono_mp2_corr.append(E_mp2)
-            mono_cc_corr.append(E_ccd)
+            mono_cc_corr[frag_id] = E_ccd
             self.logger.info("Completed monomer calculation")
 
         FMO_RHF = self.extractor.get_tot_rhf(self.config.fmo_type)
         if self.config.fmo_type == "FMO2":
             fmo_mp2_corr = sum(dimer_mp2_corr) - (self.config.nfrag - 2) * sum(mono_mp2_corr)
-            fmo_cc_corr = sum(dimer_cc_corr) - (self.config.nfrag - 2) * sum(mono_cc_corr)
+            fmo_cc_corr = sum(dimer_pairs.values()) - (self.config.nfrag - 2) * sum(mono_cc_corr.values())
         else:
             fmo_mp2_corr = sum(mono_mp2_corr)
-            fmo_cc_corr = sum(mono_cc_corr)
+            fmo_cc_corr = sum(mono_cc_corr.values())
         
         Tot_MP2 = FMO_RHF + fmo_mp2_corr
         Tot_CC = FMO_RHF + fmo_cc_corr
 
         self.logger.info(f"Total RHF energy: {FMO_RHF}")
         self.logger.info(f"MP2 correlation energy: {fmo_mp2_corr}, Total MP2 energy: {Tot_MP2}")
-        self.logger.info(f"CC correlation energy: {fmo_cc_corr}, Total CC energy: {Tot_CC}")
+        self.logger.info(f"{self.config.method} correlation energy: {fmo_cc_corr}, Total {self.config.method} energy: {Tot_CC}")
 
+        self.logger.info(f"Monomer {self.config.method} correlation energies (Ha):")
+        for frag in sorted(mono_cc_corr):
+            self.logger.info(f"Fragment {frag}: {mono_cc_corr[frag]}")
+        
         if self.config.fmo_type == "FMO2":
-            conv = 627.5095 #Hartree to kcal/mol
-            self.logger.info("Correlation-level IFIEs (Ha / kcal/mol):")
-            for idx, (i, j) in enumerate(comb):
-                Eij_cc = dimer_cc_corr[idx]
-                Ei_cc = mono_cc_corr[i]
-                Ej_cc = mono_cc_corr[j]
-                ifie_cc = Eij_cc - Ei_cc - Ej_cc
-                self.logger.info(
-                    f"  Frag {i+1}-{j+1} : {ifie_cc: .12f} Ha | {ifie_cc*conv: .6f} kcal/mol"
-                )
+            conv = 627.5095
+            self.logger.info(f"Correlation level IFIEs (Ha / Kcal/mol):")
+            for (fi, fj), Eij_cc in dimer_pairs.items():
+                Ei_cc = mono_cc_corr[fi]
+                Ej_cc = mono_cc_corr[fj]
+                IFIE_cc = Eij_cc - Ei_cc - Ej_cc
+                self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_cc} / {IFIE_cc * conv}")
 
         end = time.time()
         self.logger.info(f"Parallel overall time: {end - start} seconds")

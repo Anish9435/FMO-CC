@@ -114,7 +114,6 @@ class FMOCalculator:
         twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
         ifrag, _, Erhf, lnum1 = self.extractor.coeff(lnum1, 1, coeff_file)
         n_missing = 0
-        
         if self.config.complex_type == "covalent":
             with open(coeff_file, 'r') as infile:
                 inlines = infile.readlines()
@@ -174,9 +173,9 @@ class FMOCalculator:
         self.logger.info(f"Monomer {ifrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 
         E_ccd, _ = self.cc_parallel.cc_calc(occ, virt, o_act, v_act, nmo, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, self.config.method, self.config.niter, E_mp2_tot, self.config.conv)
-        self.logger.info(f"Monomer {ifrag}: CC correlation energy: {E_ccd}")
+        self.logger.info(f"Monomer {ifrag}: {self.config.method} correlation energy: {E_ccd}")
         self.extractor.cleanup()
-        return Erhf, E_mp2, E_ccd, lnum1, lnum2
+        return Erhf, E_mp2, E_ccd, lnum1, lnum2, ifrag
 
     def compute_dimer(self, comb_idx, i, j, lnum1, lnum2):
         """Compute energies for a dimer pair.
@@ -278,6 +277,6 @@ class FMOCalculator:
         self.logger.info(f"Dimer {ifrag, jfrag}: MP2 correlation energy: {E_mp2}, Total MP2 energy: {E_mp2_tot}")
 
         E_ccd, _ = self.cc_parallel.cc_calc(occ, virt, o_act, v_act, nmo, t1, t2, So, Sv, D1, D2, Do, Dv, twoelecint_mo, Fock_mo, self.config.method, self.config.niter, E_mp2_tot, self.config.conv)
-        self.logger.info(f"Dimer {ifrag, jfrag}: CC correlation energy: {E_ccd}")
+        self.logger.info(f"Dimer {ifrag, jfrag}: {self.config.method} correlation energy: {E_ccd}")
         self.extractor.cleanup()
-        return Erhf, E_mp2, E_ccd, lnum1, lnum2
+        return Erhf, E_mp2, E_ccd, lnum1, lnum2, ifrag, jfrag

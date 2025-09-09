@@ -113,7 +113,8 @@ class FMOCalculator:
         self.extractor.bash_run()
         twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
         ifrag, _, Erhf, lnum1 = self.extractor.coeff(lnum1, 1, coeff_file)
-
+        n_missing = 0
+        
         if self.config.complex_type == "covalent":
             with open(coeff_file, 'r') as infile:
                 inlines = infile.readlines()
@@ -126,7 +127,6 @@ class FMOCalculator:
             twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
             hf_mo_E = self.extractor.get_orb_energy(0, 0, coeff_file)
             coeff = self.extractor.get_coeff(0, 0, coeff_file)
-            n_missing = 0
             if len(hf_mo_E) < coeff.shape[1]:
                 n_missing = coeff.shape[1] - len(hf_mo_E)
                 pad_vals = np.full(n_missing, 1.0e5)
@@ -217,7 +217,7 @@ class FMOCalculator:
         self.extractor.twoelecint_process(twoelecint_file, temp_file)
         self.extractor.bash_run()
         ifrag, jfrag, Erhf, lnum1 = self.extractor.coeff(lnum1, 2, coeff_file)
-
+        n_missing = 0
         if self.config.complex_type == "covalent":
             with open(coeff_file, 'r') as infile:
                 inlines = infile.readlines()
@@ -230,7 +230,6 @@ class FMOCalculator:
             twoeint = self.extractor.read_2eint(nao, twoelecintegral_file)
             hf_mo_E = self.extractor.get_orb_energy(0, 0, coeff_file)
             coeff = self.extractor.get_coeff(0, 0, coeff_file)
-            n_missing = 0
             if len(hf_mo_E) < coeff.shape[1]:
                 n_missing = coeff.shape[1] - len(hf_mo_E)
                 pad_vals = np.full(n_missing, 1.0e5)

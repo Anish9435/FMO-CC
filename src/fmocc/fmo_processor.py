@@ -90,6 +90,7 @@ class FMOProcessor:
         start = time.time()
         mono_rhf, mono_mp2_corr, mono_cc_corr = [], [], []
         dimer_rhf, dimer_mp2_corr, dimer_cc_corr = [], [], []
+        comb = []
         lnum1, lnum2 = self.lnum1, self.lnum2
         
         if self.config.fmo_type == "FMO2":
@@ -123,6 +124,18 @@ class FMOProcessor:
         self.logger.info(f"Total RHF energy: {FMO_RHF}")
         self.logger.info(f"MP2 correlation energy: {fmo_mp2_corr}, Total MP2 energy: {Tot_MP2}")
         self.logger.info(f"CC correlation energy: {fmo_cc_corr}, Total CC energy: {Tot_CC}")
+
+        if self.config.fmo_type == "FMO2":
+            conv = 627.5095 #Hartree to kcal/mol
+            self.logger.info("Correlation-level IFIEs (Ha / kcal/mol):")
+            for idx, (i, j) in enumerate(comb):
+                Eij_cc = dimer_cc_corr[idx]
+                Ei_cc = mono_cc_corr[i]
+                Ej_cc = mono_cc_corr[j]
+                ifie_cc = Eij_cc - Ei_cc - Ej_cc
+                self.logger.info(
+                    f"  Frag {i+1}-{j+1} : {ifie_cc: .12f} Ha | {ifie_cc*conv: .6f} kcal/mol"
+                )
 
         end = time.time()
         self.logger.info(f"Parallel overall time: {end - start} seconds")

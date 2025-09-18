@@ -151,6 +151,7 @@ class FMOCalculator:
         
         trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 1e4)
         nfv = max(n_missing, trailing_bad)
+        self.logger.info(f"Auto frozen virtuals: {nfv}")
         self.logger.info(f"Monomer {ifrag}: padded {n_missing} redundant orbitals as frozen")
         Fock_mo = np.diag(hf_mo_E)
         self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape} and virtual frozen: {nfv}")
@@ -199,8 +200,12 @@ class FMOCalculator:
             A tuple containing RHF energy, MP2 correlation energy, CC correlation
             energy, updated lnum1, and updated lnum2.
         """
-        occ = self.config.occ_dimer[comb_idx]
-        virt = self.config.virt_dimer[comb_idx]
+        config_occ = self.config.occ_dimer[comb_idx]
+        config_virt = self.config.virt_dimer[comb_idx]
+        occ = config_occ
+        virt = config_virt
+        if self.config.complex_type == "covalent" and self.config.fmo_type == "FMO2":
+            pass
         nfo = self.config.nfo_dimer[comb_idx]
         nfv = self.config.nfv_dimer[comb_idx]
 
@@ -234,6 +239,12 @@ class FMOCalculator:
                 pad_vals = np.full(n_missing, 1.0e5)
                 hf_mo_E = np.concatenate([hf_mo_E, pad_vals])
                 self.logger.info(f"Dimer ({ifrag}, {jfrag}): padded {n_missing} redundant orbitals as frozen")
+            if self.config.fmo_type == "FMO2":
+                occ = sum(1 for e in hf_mo_E if e < 0.0)
+                virt = nmo - occ
+                self.config.occ_dimer[comb_idx] = occ
+                self.config.virt_dimer[comb_idx] = virt if virt >= 0 else 0
+                self.logger.info(f"Dimer ({ifrag}, {jfrag}): updated occ to {occ} and virt to {virt}")
         else:
             nao = self.config.nao_dimer[comb_idx]
             nmo = self.config.nmo_dimer[comb_idx]
@@ -255,6 +266,7 @@ class FMOCalculator:
 
         trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 1e4)
         nfv = max(n_missing, trailing_bad)
+        self.logger.info(f"Auto frozen virtuals: {nfv}")
         self.logger.info(f"Dimer ({ifrag}, {jfrag}): padded {n_missing} redundant orbitals as frozen")
         Fock_mo = np.diag(hf_mo_E)
         self.logger.info(f"Orbital energies: {hf_mo_E} and coeff shape: {coeff.shape} and virtual frozen: {nfv}")

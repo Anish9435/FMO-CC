@@ -96,8 +96,17 @@ class FMOProcessor:
         lnum1, lnum2 = self.lnum1, self.lnum2
         
         if self.config.fmo_type == "FMO2":
+            ndimers_actual = self.extractor.get_available_dimers()
             seq = [i for i in range(self.config.nfrag)]
-            comb = list(combinations(seq, 2))
+            comb_expected = list(combinations(seq, 2))
+            if ndimers_actual != len(comb_expected):
+                self.logger.info(
+                    f"Dimer count adjusted: expected {len(comb_expected)}, "
+                    f"found {ndimers_actual} — regenerating dimer list"
+                )
+                comb = [(0, 0)] * ndimers_actual
+            else:
+                comb = comb_expected
             for idx, (i, j) in enumerate(comb):
                 Erhf, E_mp2, E_ccd, lnum1, lnum2, fi, fj = self.calculator.compute_dimer(idx, i, j, lnum1, lnum2)
                 dimer_rhf.append(Erhf)

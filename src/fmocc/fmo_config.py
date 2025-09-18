@@ -230,8 +230,12 @@ class FMOConfig:
         self.frag_elec = self._compute_frag_elec(occ_mono)
         self.occ_mono = occ_mono if self.complex_type == "covalent" else [int(e // 2) for e in self.frag_elec]
         self.virt_mono = [nmo - occ for nmo, occ in zip(self.nmo_mono, self.occ_mono)]
-        self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
-        self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
+        if self.complex_type == "covalent" and self.fmo_type == "FMO2":
+            self.occ_dimer = [0] * ndimer
+            self.virt_dimer = [0] * ndimer
+        else:
+            self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
+            self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
         nmer: List[int] = []
         if self.fragment_index and self.complex_type == "non-covalent":
             if len(self.fragment_index) != self.nfrag:
@@ -264,8 +268,9 @@ class FMOConfig:
         
         self.nao_dimer.sort()
         self.nmo_dimer.sort()
-        self.occ_dimer.sort()
-        self.virt_dimer.sort()
+        if self.complex_type == "non-covalent":
+            self.occ_dimer.sort()
+            self.virt_dimer.sort()
         if self.o_act_dimer:
             self.o_act_dimer.sort()
         if self.v_act_dimer:

@@ -175,6 +175,22 @@ class FMOExtractor:
         except Exception as e:
             raise RuntimeError(f"Error parsing nbasis from {self.gamess_2eint}: {e}")
         return 0
+    
+    def get_available_dimers(self):
+        """Count number of available dimers from GAMESS output.
+
+        Returns
+        -------
+        int
+            Number of available dimer fragment pairs.
+        """
+        count = 0
+        with open(self.gamess_out, 'r') as infile:
+            for line in infile:
+                if "iFrag" in line and "jFrag" in line:
+                    count += 1
+        self.logger.info(f"Counted available dimers: {count}")
+        return count
 
     def get_tot_rhf(self, fmo_type):
         """Extract the total RHF energy from GAMESS output.

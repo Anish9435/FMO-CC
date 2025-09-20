@@ -262,7 +262,7 @@ class FMOConfig:
             self.v_act_dimer = [0] * ndimer
         
         self.nfo_mono = [self.nfo * nmer_i for nmer_i in nmer]
-        self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]
+        self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]   
         self.nfo_dimer = [sum(combo) for combo in combinations(self.nfo_mono, 2)]
         self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
         

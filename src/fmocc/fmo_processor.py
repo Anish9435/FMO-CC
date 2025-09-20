@@ -123,8 +123,10 @@ class FMOProcessor:
 
         FMO_RHF = self.extractor.get_tot_rhf(self.config.fmo_type)
         if self.config.fmo_type == "FMO2":
-            fmo_mp2_corr = sum(dimer_mp2_corr) - (self.config.nfrag - 2) * sum(mono_mp2_corr)
-            fmo_cc_corr = sum(dimer_pairs.values()) - (self.config.nfrag - 2) * sum(mono_cc_corr.values())
+            fmo_mp2_corr = sum(Eij_mp2 - mono_mp2_corr[fi] - mono_mp2_corr[fj] 
+                               for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr))
+            fmo_cc_corr = sum(Eij_cc - mono_cc_corr[fi] - mono_cc_corr[fj] 
+                               for (fi, fj), Eij_cc in dimer_pairs.items())
         else:
             fmo_mp2_corr = sum(mono_mp2_corr)
             fmo_cc_corr = sum(mono_cc_corr.values())

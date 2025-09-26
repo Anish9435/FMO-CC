@@ -89,7 +89,7 @@ class FMOProcessor:
         - Measures and logs the total execution time.
         """
         start = time.time()
-        mono_rhf, mono_mp2_corr = [], []
+        mono_rhf, mono_mp2_corr = [], {}
         dimer_rhf, dimer_mp2_corr = [], []
         mono_cc_corr = {}
         dimer_pairs = {}
@@ -117,26 +117,37 @@ class FMOProcessor:
         for i in range(self.config.nfrag):
             Erhf, E_mp2, E_ccd, lnum1, lnum2, frag_id = self.calculator.compute_monomer(i, lnum1, lnum2)
             mono_rhf.append(Erhf)
-            mono_mp2_corr.append(E_mp2)
+            mono_mp2_corr[frag_id] = E_mp2
             mono_cc_corr[frag_id] = E_ccd
             self.logger.info("Completed monomer calculation")
 
         FMO_RHF = self.extractor.get_tot_rhf(self.config.fmo_type)
         if self.config.fmo_type == "FMO2":
-            fmo_mp2_corr = sum(Eij_mp2 - mono_mp2_corr[fi] - mono_mp2_corr[fj] 
+            mono_mp2_sum = sum(mono_mp2_corr.values())
+            mono_cc_sum = sum(mono_cc_corr.values())
+            fmo_mp2_corr_pair = sum(Eij_mp2 - mono_mp2_corr[fi] - mono_mp2_corr[fj] 
                                for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr))
-            fmo_cc_corr = sum(Eij_cc - mono_cc_corr[fi] - mono_cc_corr[fj] 
+            fmo_cc_corr_pair = sum(Eij_cc - mono_cc_corr[fi] - mono_cc_corr[fj] 
                                for (fi, fj), Eij_cc in dimer_pairs.items())
+            fmo_mp2_corr = mono_mp2_sum + fmo_mp2_corr_pair
+            fmo_cc_corr = mono_cc_sum + fmo_cc_corr_pair
         else:
-            fmo_mp2_corr = sum(mono_mp2_corr)
+            fmo_mp2_corr = sum(mono_mp2_corr.values())
             fmo_cc_corr = sum(mono_cc_corr.values())
         
         Tot_MP2 = FMO_RHF + fmo_mp2_corr
         Tot_CC = FMO_RHF + fmo_cc_corr
-
         self.logger.info(f"Total RHF energy: {FMO_RHF}")
         self.logger.info(f"MP2 correlation energy: {fmo_mp2_corr}, Total MP2 energy: {Tot_MP2}")
-        self.logger.info(f"{self.config.method} correlation energy: {fmo_cc_corr}, Total {self.config.method} energy: {Tot_CC}")
+
+        if self.config.method == "MP2":
+            corr_energy = fmo_mp2_corr
+            total_energy = Tot_MP2
+            self.logger.info(f"MP2 correlation energy: {corr_energy}, Total MP2 energy: {total_energy}")
+        else:
+            corr_energy = fmo_cc_corr
+            total_energy = Tot_CC
+            self.logger.info(f"{self.config.method} correlation energy: {corr_energy}, Total {self.config.method} energy: {total_energy}")
 
         self.logger.info(f"Monomer {self.config.method} correlation energies (Ha):")
         for frag in sorted(mono_cc_corr):
@@ -144,12 +155,20 @@ class FMOProcessor:
         
         if self.config.fmo_type == "FMO2":
             conv = 627.5095
-            self.logger.info(f"Correlation level IFIEs (Ha / Kcal/mol):")
-            for (fi, fj), Eij_cc in dimer_pairs.items():
-                Ei_cc = mono_cc_corr[fi]
-                Ej_cc = mono_cc_corr[fj]
-                IFIE_cc = Eij_cc - Ei_cc - Ej_cc
-                self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_cc} / {IFIE_cc * conv}")
+            if self.config.method == "MP2":
+                self.logger.info(f"MP2 level IFIEs (Ha / Kcal/mol):")
+                for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr):
+                    Ei_mp2 = mono_mp2_corr[fi]
+                    Ej_mp2 = mono_mp2_corr[fj]
+                    IFIE_mp2 = Eij_mp2 - Ei_mp2 - Ej_mp2
+                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_mp2} / {IFIE_mp2 * conv}")
+            else:
+                self.logger.info(f"Correlation level IFIEs (Ha / Kcal/mol):")
+                for (fi, fj), Eij_cc in dimer_pairs.items():
+                    Ei_cc = mono_cc_corr[fi]
+                    Ej_cc = mono_cc_corr[fj]
+                    IFIE_cc = Eij_cc - Ei_cc - Ej_cc
+                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_cc} / {IFIE_cc * conv}")
 
         end = time.time()
         self.logger.info(f"Parallel overall time: {end - start} seconds")

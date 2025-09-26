@@ -124,8 +124,8 @@ class FMOConfig:
             raise ValueError("All elements must be strings")
         
         self.method = data["method"]
-        if self.method not in ["CCSD", "ICCSD", "ICCSD-PT"]:
-            self.logger.error(f"Invalid method: {self.method}. Must be 'CCSD', 'ICCSD' or 'ICCSD-PT'")
+        if self.method not in ["MP2", "CCSD", "ICCSD", "ICCSD-PT"]:
+            self.logger.error(f"Invalid method: {self.method}. Must be 'MP2', 'CCSD', 'ICCSD' or 'ICCSD-PT'")
             raise ValueError(f"Invalid method: {self.method}")
         
         try:

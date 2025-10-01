@@ -168,8 +168,8 @@ class FMOConfig:
         self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)
-        self.nfv_mono = data.get("nfv_mono", None)  # Load from JSON input
-        self.nfv_dimer = data.get("nfv_dimer", None) # Load from JSON input
+        self.nfv_mono = data.get("nfv_mono")  # Load from JSON input
+        self.nfv_dimer = data.get("nfv_dimer") # Load from JSON input
         self.frag_atom = data.get("frag_atom", 3)
         self.fragment_index = data.get("fragment_index", [])
         self.coeff_file = data.get("coeff_file", "coeff.txt")
@@ -191,9 +191,11 @@ class FMOConfig:
         self.o_act_dimer: List[int] = []
         self.v_act_dimer: List[int] = []
         self.nfo_mono: List[int] = []
-        self.nfv_mono: List[int] = []
+        if self.nfv_mono is None:
+            self.nfv_mono: List[int] = []
         self.nfo_dimer: List[int] = []
-        self.nfv_dimer: List[int] = []
+        if self.nfv_dimer is None:
+            self.nfv_dimer: List[int] = []
 
     def update_from_gamess(self, nfrag: int, nao_mono: List[int], occ_mono: List[int]) -> None:
         """Update configuration parameters based on GAMESS output.
@@ -264,11 +266,10 @@ class FMOConfig:
             self.v_act_dimer = [0] * ndimer
         
         self.nfo_mono = [self.nfo * nmer_i for nmer_i in nmer]
-        if self.nfv_mono is None:
-            self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]
+        if not self.nfv_mono:
+            self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]      
         self.nfo_dimer = [sum(combo) for combo in combinations(self.nfo_mono, 2)]
-
-        if self.nfv_dimer is None:
+        if not self.nfv_dimer:
             self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
 
         self.nao_dimer.sort()
@@ -283,7 +284,7 @@ class FMOConfig:
         self.nfo_dimer.sort()
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")  # CHANGE: Logging update
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
-        self.logger.info(f"Number of virtual orbitals for monomer: {self.virt_mono}")
+        self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
         self.logger.info(f"Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")
         self.logger.info(f"Active virtual orbitals for dimer: {self.v_act_dimer} and for monomer: {self.v_act_mono}")
         self.logger.info(f"Number of frozen occupied orbitals for dimer: {self.nfo_dimer} and for monomer: {self.nfo_mono}")

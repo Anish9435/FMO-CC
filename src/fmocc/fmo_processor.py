@@ -73,7 +73,7 @@ class FMOProcessor:
                 self.logger.error(f"{file_desc} file {file_path} size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
                 raise ValueError(f"{file_desc} file size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
             self.logger.info(f"{file_desc} file {file_path} size ({file_size:.2f} GB) is within limit ({max_size} GB) for {total_atoms} atoms")
-            
+
         if not occ_mono and self.config.complex_type == "non-covalent":
             occ_mono = [0]*nfrag
         if self.config.complex_type == "covalent":
@@ -151,20 +151,16 @@ class FMOProcessor:
         else:
             fmo_mp2_corr = sum(mono_mp2_corr.values())
             fmo_cc_corr = sum(mono_cc_corr.values())
-        
-        Tot_MP2 = FMO_RHF + fmo_mp2_corr
-        Tot_CC = FMO_RHF + fmo_cc_corr
-        self.logger.info(f"Total RHF energy: {FMO_RHF}")
-        self.logger.info(f"MP2 correlation energy: {fmo_mp2_corr}, Total MP2 energy: {Tot_MP2}")
 
+        self.logger.info(f"Total RHF energy: {FMO_RHF}")
         if self.config.method == "MP2":
             corr_energy = fmo_mp2_corr
-            total_energy = Tot_MP2
-            self.logger.info(f"MP2 correlation energy: {corr_energy}, Total MP2 energy: {total_energy}")
+            Tot_MP2 = FMO_RHF + fmo_mp2_corr
+            self.logger.info(f"MP2 correlation energy: {corr_energy}, Total MP2 energy: {Tot_MP2}")
         else:
             corr_energy = fmo_cc_corr
-            total_energy = Tot_CC
-            self.logger.info(f"{self.config.method} correlation energy: {corr_energy}, Total {self.config.method} energy: {total_energy}")
+            Tot_CC = FMO_RHF + fmo_cc_corr
+            self.logger.info(f"{self.config.method} correlation energy: {corr_energy}, Total {self.config.method} energy: {Tot_CC}")
 
         self.logger.info(f"Monomer {self.config.method} correlation energies (Ha):")
         for frag in sorted(mono_cc_corr):
@@ -172,13 +168,14 @@ class FMOProcessor:
         
         if self.config.fmo_type == "FMO2":
             conv = 627.5095
-            self.logger.info(f"MP2 level IFIEs (Ha / Kcal/mol):")
-            for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr):
-                Ei_mp2 = mono_mp2_corr[fi]
-                Ej_mp2 = mono_mp2_corr[fj]
-                IFIE_mp2 = Eij_mp2 - Ei_mp2 - Ej_mp2
-                self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_mp2} / {IFIE_mp2 * conv}")
-            if self.config.method != "MP2":
+            if self.config.method == "MP2":
+                self.logger.info(f"MP2 level IFIEs (Ha / Kcal/mol):")
+                for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr):
+                    Ei_mp2 = mono_mp2_corr[fi]
+                    Ej_mp2 = mono_mp2_corr[fj]
+                    IFIE_mp2 = Eij_mp2 - Ei_mp2 - Ej_mp2
+                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_mp2} / {IFIE_mp2 * conv}")
+            else:
                 self.logger.info(f"Correlation level IFIEs (Ha / Kcal/mol):")
                 for (fi, fj), Eij_cc in dimer_pairs.items():
                     Ei_cc = mono_cc_corr[fi]

@@ -149,8 +149,6 @@ class FMOCalculator:
             o_act = self.config.o_act_mono[frag_idx]
             v_act = self.config.v_act_mono[frag_idx]
         
-        trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 1e4)
-        nfv = max(n_missing, trailing_bad)
         self.logger.info(f"Auto frozen virtuals: {nfv}")
         self.logger.info(f"Monomer {ifrag}: padded {n_missing} redundant orbitals as frozen")
         Fock_mo = np.diag(hf_mo_E)
@@ -268,8 +266,6 @@ class FMOCalculator:
             o_act = self.config.o_act_dimer[comb_idx]
             v_act = self.config.v_act_dimer[comb_idx]
 
-        trailing_bad = np.count_nonzero(hf_mo_E[::-1] > 1e4)
-        nfv = max(n_missing, trailing_bad)
         self.logger.info(f"Auto frozen virtuals: {nfv}")
         self.logger.info(f"Dimer ({ifrag}, {jfrag}): padded {n_missing} redundant orbitals as frozen")
         Fock_mo = np.diag(hf_mo_E)

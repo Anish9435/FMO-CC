@@ -168,6 +168,8 @@ class FMOConfig:
         self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)
+        self.nfv_mono = data.get("nfv_mono", None)  # Load from JSON input
+        self.nfv_dimer = data.get("nfv_dimer", None) # Load from JSON input
         self.frag_atom = data.get("frag_atom", 3)
         self.fragment_index = data.get("fragment_index", [])
         self.coeff_file = data.get("coeff_file", "coeff.txt")
@@ -262,10 +264,13 @@ class FMOConfig:
             self.v_act_dimer = [0] * ndimer
         
         self.nfo_mono = [self.nfo * nmer_i for nmer_i in nmer]
-        self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]   
+        if self.nfv_mono is None:
+            self.nfv_mono = [self.nfv * nmer_i for nmer_i in nmer]
         self.nfo_dimer = [sum(combo) for combo in combinations(self.nfo_mono, 2)]
-        self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
-        
+
+        if self.nfv_dimer is None:
+            self.nfv_dimer = [sum(combo) for combo in combinations(self.nfv_mono, 2)]
+
         self.nao_dimer.sort()
         self.nmo_dimer.sort()
         if self.complex_type == "non-covalent":
@@ -276,7 +281,6 @@ class FMOConfig:
         if self.v_act_dimer:
             self.v_act_dimer.sort()
         self.nfo_dimer.sort()
-        self.nfv_dimer.sort()
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")  # CHANGE: Logging update
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
         self.logger.info(f"Number of virtual orbitals for monomer: {self.virt_mono}")

@@ -125,8 +125,11 @@ class FMOProcessor:
         if self.config.fmo_type == "FMO2":
             mono_mp2_sum = sum(mono_mp2_corr.values())
             mono_cc_sum = sum(mono_cc_corr.values())
+            dimer_mp2_corr_dict = {
+                pair: corr for pair, corr in zip(dimer_pairs.keys(), dimer_mp2_corr)
+            }
             fmo_mp2_corr_pair = sum(Eij_mp2 - mono_mp2_corr[fi] - mono_mp2_corr[fj] 
-                               for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr))
+                               for (fi, fj), Eij_mp2 in dimer_mp2_corr_dict.items())
             fmo_cc_corr_pair = sum(Eij_cc - mono_cc_corr[fi] - mono_cc_corr[fj] 
                                for (fi, fj), Eij_cc in dimer_pairs.items())
             fmo_mp2_corr = mono_mp2_sum + fmo_mp2_corr_pair

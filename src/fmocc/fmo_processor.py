@@ -59,7 +59,21 @@ class FMOProcessor:
         with open(gamess_2eint, 'r') as f:
             self.lnum2 = len(f.readlines())
         nfrag = self.extractor.get_nfrags()
-        nao_mono, _, occ_mono = self.extractor.get_frag_naos_atoms(self.lnum1, self.config.complex_type)
+        nao_mono, natoms, occ_mono = self.extractor.get_frag_naos_atoms(self.lnum1, self.config.complex_type)
+        total_atoms = sum(natoms)
+        for file_path, file_desc in [(gamess_out, "GAMESS output"), (gamess_2eint, "GAMESS 2e integral")]:
+            file_size = os.path.getsize(file_path) / (1024 * 1024 * 1024)  # Size in GB
+            if total_atoms <= 40:
+                max_size = 10  # 10GB for <= 40 atoms
+            elif total_atoms <= 60:
+                max_size = 20  # 20GB for <= 60 atoms
+            else:
+                max_size = 50  # 50GB for > 60 atoms
+            if file_size > max_size:
+                self.logger.error(f"{file_desc} file {file_path} size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
+                raise ValueError(f"{file_desc} file size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
+            self.logger.info(f"{file_desc} file {file_path} size ({file_size:.2f} GB) is within limit ({max_size} GB) for {total_atoms} atoms")
+            
         if not occ_mono and self.config.complex_type == "non-covalent":
             occ_mono = [0]*nfrag
         if self.config.complex_type == "covalent":

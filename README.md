@@ -99,6 +99,8 @@ run_fmo_cc -c my_config.json
 | `virt_act`              | Number of active virtual orbitals (used only if `auto_active=false`)     |
 | `nfo`                   | Number of frozen occupied orbitals                                       |
 | `nfv`                   | Number of frozen virtual orbitals                                        |
+| `nfv_mono`              | List of frozen virtual orbitals for the fragments                        |
+| `nfv_dimer`             | List of frozen virtual orbitals for the fragment pairs                   |
 | `basis_set`             | Basis set to use (e.g., `6-21g`, `cc-pVDZ`, etc.)                        |
 | `niter`                 | Maximum number of CC iterations                                          |
 | `frag_atom`             | Number of atoms per fragment (used in noncovalent fragmentation mode)    |
@@ -116,6 +118,8 @@ run_fmo_cc -c my_config.json
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
 **Note:** Currently, the codebase accepts GAMESS-generated output files as input. Work is in progress to automate the fragmentation process and GAMESS execution. Using the provided output files, the code extracts the relevant parameters for subsequent runs and computes accurate MP2 and CC energies.
+
+**Note:** For covalently bonded systems, it is recommended to use the input parameters `nfv_mono` and `nfv_dimer`
 
 **Note** In addition to conventional CCSD, two alternative variants are implemented: iCCSDn and iCCSDn-PT, both with comparable scaling to CCSD. Details: 
 [A double exponential Coupled Cluster Theory](https://pubs.aip.org/aip/jcp/article/156/24/244117/2841424/A-double-exponential-coupled-cluster-theory-in-the?searchresult=1)

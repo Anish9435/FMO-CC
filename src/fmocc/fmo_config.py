@@ -129,6 +129,7 @@ class FMOConfig:
         try:
             with open(input_file) as f:
                 data = json.load(f)
+            self.logger.info(f"Successfully loaded configuration from {input_file}")
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.logger.error(f"Error reading {input_file}: {e}")
             raise ValueError(f"Error reading {input_file}: {e}")
@@ -144,12 +145,12 @@ class FMOConfig:
                     merged[key] = val
             data = merged
         self.data = data
+        
         required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge", "fmo_type", "complex_type"]
         for key in required_keys:
             if key not in data:
                 self.logger.error(f"Missing required key in JSON: {key}")
                 raise ValueError(f"Missing required key in JSON: {key}")
-
         self.elements = data["elements"]
         if not all(isinstance(e, str) for e in self.elements):
             self.logger.error("All elements must be strings")
@@ -314,6 +315,9 @@ class FMOConfig:
         if self.v_act_dimer:
             self.v_act_dimer.sort()
         self.nfo_dimer.sort()
+
+        self.logger.info(f"system type: {self.complex_type}")
+        self.logger.info(f"Method: {self.method}, Basis set: {self.basis_set}, Convergence: {self.conv}, Max Iter: {self.niter}")
         self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
         self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")

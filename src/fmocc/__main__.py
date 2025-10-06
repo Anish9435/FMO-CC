@@ -43,12 +43,15 @@ def main():
         config_json = json.load(f)
     
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    default_data_dir = os.path.join(repo_root, "data")
+    default_data_dir = os.path.join(os.path.dirname(repo_root), "data")
     
     if args.data_dir:
         data_dir = os.path.abspath(args.data_dir)
     else:
         data_dir = os.path.abspath(config_json.get("data_dir", default_data_dir))
+
+    if not os.path.exists(os.path.join(data_dir, f"{config_json.get('common', config_json).get('filename')}.dat")):
+        data_dir = os.path.join(os.path.dirname(data_dir), "data")
 
     try:
         processor = FMOProcessor(config_file, base_dir=data_dir)

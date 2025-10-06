@@ -132,6 +132,17 @@ class FMOConfig:
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.logger.error(f"Error reading {input_file}: {e}")
             raise ValueError(f"Error reading {input_file}: {e}")
+        
+        if "common" in data:
+            common = data.get("common", {})
+            ctype = common.get("complex_type", data.get("complex_type", "non-covalent"))
+            branch_key = "covalent" if "covalent" in ctype else "non-covalent"
+            branch = data.get(branch_key, {})
+            merged = {**common, **branch}
+            for key, val in data.items():
+                if key not in ["common", "covalent", "non-covalent"]:
+                    merged[key] = val
+            data = merged
         self.data = data
         required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge", "fmo_type", "complex_type"]
         for key in required_keys:

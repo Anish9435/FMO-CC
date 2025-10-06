@@ -9,7 +9,7 @@ convergence, and updates CC amplitudes.
 Key Responsibilities
 --------------------
     - Manage parallel execution of CCSD, iCCSD, and iCCSD-PT energy evaluations.
-    - Construct and combine diagrammatic contributions via `DiagramBuilder`.
+    - Construct and combine diagrammatic contributions via DiagramBuilder.
     - Update single (t₁), double (t₂), and scattering amplitudes (Sₒ, Sᵥ).
     - Monitor convergence criteria for energy and amplitude updates.
     - Provide energy computation routines for CCSD, iCCSD, and iCCSD-PT variants.

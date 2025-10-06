@@ -1,3 +1,24 @@
+"""
+Extraction and parsing of FMO data from GAMESS output files.
+
+This module defines the FMOExtractor class, responsible for parsing and extracting the
+fragment-based data from GAMESS output files. It captures key quantities such as nuclear
+repulsion energy, number of fragments, basis functions, electrons, and fragment-specific
+coefficients and integrals.
+
+Key Responsibilities
+--------------------
+    - Parse GAMESS output files to extract fragment-specific data.
+    - Retrieve nuclear repulsion energies, orbital energies, and MO coefficients.
+    - Extract one- and two-electron integrals for monomers and dimers.
+    - Interface with external scripts for efficient processing of two-electron integrals.
+
+Dependencies
+-------------
+    - Python standard libraries: os, re, glob, subprocess, copy
+    - External library: numpy
+    - Local module: utils (FMOCC_LOGGER)
+"""
 import os
 import re
 import glob

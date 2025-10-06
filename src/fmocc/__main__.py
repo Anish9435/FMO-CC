@@ -1,3 +1,27 @@
+"""
+Main entry point for executing FMO-CC calculations.
+
+This script serves as a high-level driver for the FMO-CC workflows. It reads a JSON 
+configurational file, initializes the computational env, and invokes the FMOProcessor
+class to perform the calculations.
+
+Key Responsibilities
+--------------------
+    - Parse command-line arguments for:
+        - Configuration file (`--config` or `-c`)
+        - Data directory (`--data_dir` or `-d`)
+    - Load and validate the JSON configuration file.
+    - Determine the working data directory (explicitly provided or default).
+    - Initialize and execute the FMO-CC workflow via the `FMOProcessor`.
+    - Log the computed correlation and total energies upon completion.
+    - Clean up Python cache directories (`__pycache__`).
+
+Dependencies
+-------------
+    - fmocc.fmo_processor.FMOProcessor
+    - fmocc.utils
+    - Python standard libraries: os, sys, json, argparse
+"""
 import os
 import sys
 import json
@@ -20,6 +44,7 @@ def main():
     
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     default_data_dir = os.path.join(repo_root, "data")
+    
     if args.data_dir:
         data_dir = os.path.abspath(args.data_dir)
     else:

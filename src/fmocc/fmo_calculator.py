@@ -1,7 +1,27 @@
+"""
+Fragment Molecular Orbital energy computations for fragments and fragment pairs
+
+This module defines the FMOCalculator class, responsible for performing energy
+calculations within the FMO framework, including RHF, MP2 and CC computations
+for fragments and fragment pairs. It manages the transformation of two-electron
+integrals from atomic orbital (AO) to molecular orbital (MO) basis and orchestrates
+the execution of MP2 and CC methods efficiently.
+
+Key Responsibilities
+--------------------
+    - Perform RHF, MP2, and CC energy computations for FMO monomers and dimers.
+    - Transform two-electron integrals from AO to MO representation.
+    - Coordinate parallelized CC calculations using the CCParallel module.
+    - Interface with MP2Calculator for perturbative energy evaluations.
+
+Dependencies
+-------------
+    - External library: numpy
+    - Local modules: MP2 (MP2Calculator), main_parallel (CCParallel), utils (FMOCC_LOGGER)
+"""
 import numpy as np
 from .MP2 import MP2Calculator
 from .main_parallel import CCParallel
-from itertools import combinations
 from .utils import FMOCC_LOGGER
 
 class FMOCalculator:
@@ -74,7 +94,7 @@ class FMOCalculator:
             raise RuntimeError(f"Error transforming 2e integrals: {e}")
 
     def compute_monomer(self, i, lnum1, lnum2):
-        """Compute energies for a single monomer.
+        """Compute energies for the fragments (monomers).
 
         Parameters
         ----------
@@ -181,7 +201,7 @@ class FMOCalculator:
         return Erhf, E_mp2, E_ccd, lnum1, lnum2, ifrag
 
     def compute_dimer(self, comb_idx, i, j, lnum1, lnum2):
-        """Compute energies for a dimer pair.
+        """Compute energies for the fragment pairs (dimer pair).
 
         Parameters
         ----------

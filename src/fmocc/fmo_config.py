@@ -1,3 +1,24 @@
+"""
+Configuration management for FMO-CC calculations for fragments and fragment pairs
+
+This module defines the FMOConfig class, responsible for managing and validating
+configuration parameters for FMO calculations. It handles JSON-based input, updates
+fragment and fragment-pair parameters based on GAMESS output, and supports automatic
+active orbital selection and electron count for each fragment.
+
+Key Responsibilities
+--------------------
+    - Load, parse, and validate JSON configuration files for FMO calculations.
+    - Update fragment-specific parameters, including orbital and electron assignments.
+    - Support automatic selection of active orbitals and electron counts per fragment.
+    - Facilitate configuration management for both fragments and fragment pairs.
+
+Dependencies
+-------------
+    - Python standard libraries: json, itertools (combinations)
+    - External library: typing (List)
+    - Local module: utils (FMOCC_LOGGER)
+"""
 import json
 from typing import List
 from itertools import combinations
@@ -168,8 +189,8 @@ class FMOConfig:
         self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)
-        self.nfv_mono = data.get("nfv_mono")  # Load from JSON input
-        self.nfv_dimer = data.get("nfv_dimer") # Load from JSON input
+        self.nfv_mono = data.get("nfv_mono")
+        self.nfv_dimer = data.get("nfv_dimer")
         self.frag_atom = data.get("frag_atom", 3)
         self.fragment_index = data.get("fragment_index", [])
         self.coeff_file = data.get("coeff_file", "coeff.txt")
@@ -282,7 +303,7 @@ class FMOConfig:
         if self.v_act_dimer:
             self.v_act_dimer.sort()
         self.nfo_dimer.sort()
-        self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")  # CHANGE: Logging update
+        self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")
         self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
         self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
         self.logger.info(f"Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")

@@ -1,4 +1,23 @@
-from math import comb
+"""
+Orchestration of FMO-CC calculations.
+
+This module implements the FMOProcessor class, responsible for managing and orchestrating
+the full FMO-CC calculation workflow. It handles configuration management, data extraction
+from GAMESS output, energy computations for monomers and dimers, and aggregation of results.
+
+Key Responsibilities
+--------------------
+    - Initialize and validate FMO calculation configurations via FMOConfig.
+    - Extract fragment-specific data from GAMESS outputs using FMOExtractor.
+    - Perform RHF, MP2, and CC energy computations for monomers and dimers through FMOCalculator.
+    - Aggregate fragment and fragment-pair energies to obtain total electronic energies.
+    - Manage workflow execution, temporary resources, and logging for reproducibility.
+
+Dependencies
+-------------
+    - Python standard libraries: math (comb), os, time, tempfile, itertools (combinations)
+    - Local modules: fmo_config (FMOConfig), fmo_extractor (FMOExtractor), fmo_calculator (FMOCalculator), utils (FMOCC_LOGGER)
+"""
 import os
 import time
 import tempfile

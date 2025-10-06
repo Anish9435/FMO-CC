@@ -1,9 +1,30 @@
+"""
+MP2 energy and amplitude utilities for FMO-CC calculations.
+
+This module defines the MP2Calculator class, which handles initialization
+of second-order Møller–Plesset perturbation theory (MP2) amplitudes and
+the computation of MP2 correlation energies. It includes helper functions
+for orbital freezing, amplitude guessing, and energy evaluation.
+
+Key Responsibilities
+--------------------
+    - Perform orbital freezing (occupied and virtual).
+    - Generate initial guesses for T₁, T₂, Sₒ, and Sᵥ amplitudes.
+    - Compute MP2 correlation and total energies.
+
+Dependencies
+-------------
+    - Python standard libraries: gc, copy
+    - External library: numpy
+    - Local module: utils (FMOCC_LOGGER)
+"""
 import gc
 import copy as cp
 import numpy as np
 from .utils import FMOCC_LOGGER
 
 class MP2Calculator:
+    """Class for computing MP2 amplitudes and correlation energies within FMO-CC"""
     def __init__(self):
         self.logger = FMOCC_LOGGER
 
@@ -59,7 +80,7 @@ class MP2Calculator:
                     for k in range(occ - o_act, occ):
                         Do[i, j, a, k - occ + o_act] = hf_mo_E[i] + hf_mo_E[j] - hf_mo_E[a + occ] + hf_mo_E[k]
                         So[i, j, a, k - occ + o_act] = twoelecint_mo[i, j, a + occ, k] / Do[i, j, a, k - occ + o_act]
-                        #self.logger.info(f"Do: {i,j,a,k-occ+o_act,Do[i,j,a,k-occ+o_act]}")
+        self.logger.debug("Computed initial So guess")
         return So, Do
 
     def guess_sv(self, occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo):
@@ -71,7 +92,7 @@ class MP2Calculator:
                     for b in range(virt):
                         Dv[i, c, a, b] = hf_mo_E[i] - hf_mo_E[c + occ] - hf_mo_E[a + occ] - hf_mo_E[b + occ]
                         Sv[i, c, a, b] = twoelecint_mo[i, c + occ, a + occ, b + occ] / Dv[i, c, a, b]
-
+        self.logger.debug("Computed initial Sv guess")
         return Sv, Dv
 
     def MP2_energy(self, occ, nao, t2, twoelecint_mo, E_hf):

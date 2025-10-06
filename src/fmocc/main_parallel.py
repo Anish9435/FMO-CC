@@ -1,3 +1,25 @@
+"""
+Parallelized Coupled-Cluster (CC) driver in FMO framework.
+
+This module implements the CCParallel class, which performs parallel CC calculations-
+including CCSD, ICCSD, and ICCSD-PT - withing the FMO framework. It leverages Python's
+multiprocessing to distribute diagram evaluations across multiple CPU cores, monitors
+convergence, and updates CC amplitudes.
+
+Key Responsibilities
+--------------------
+    - Manage parallel execution of CCSD, iCCSD, and iCCSD-PT energy evaluations.
+    - Construct and combine diagrammatic contributions via `DiagramBuilder`.
+    - Update single (t₁), double (t₂), and scattering amplitudes (Sₒ, Sᵥ).
+    - Monitor convergence criteria for energy and amplitude updates.
+    - Provide energy computation routines for CCSD, iCCSD, and iCCSD-PT variants.
+
+Dependencies
+-------------
+    - Python standard libraries: copy, multiprocessing (Pool, cpu_count)
+    - External library: numpy
+    - Local modules: diagrams (DiagramBuilder), utils (Symmetrizer, AmplitudeUpdater, FMOCC_LOGGER)
+"""
 import copy as cp
 import numpy as np
 from multiprocessing import Pool, cpu_count
@@ -252,8 +274,8 @@ class CCParallel:
                 R_ijab7_temp = pool.apply_async(self.diagram_builder.update7,args=(occ,nao,t1,t2,twoelecint_mo,))
                 R_ijab8_temp = pool.apply_async(self.diagram_builder.update8,args=(occ,nao,t1,t2,twoelecint_mo,))
                 R_ijab9_temp = pool.apply_async(self.diagram_builder.update9,args=(occ,nao,tau,twoelecint_mo,))
-                R_iuab_temp = pool.apply_async(self.diagram_builder.Sv_diagrams,args=(occ,v_act,nao,Sv,t1,t2,Fock_mo,twoelecint_mo,))
-                R_ijav_temp = pool.apply_async(self.diagram_builder.So_diagrams,args=(occ,o_act,nao,So,t1,t2,Fock_mo,twoelecint_mo,))
+                R_iuab_temp = pool.apply_async(self.diagram_builder.Sv_diagrams,args=(occ,v_act,nao,Sv,t2,Fock_mo,twoelecint_mo,))
+                R_ijav_temp = pool.apply_async(self.diagram_builder.So_diagrams,args=(occ,o_act,nao,So,t2,Fock_mo,twoelecint_mo,))
 
                 pool.close()
                 pool.join()

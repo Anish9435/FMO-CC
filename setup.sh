@@ -17,6 +17,18 @@ if (( PYTHON_MAJOR < 3 || (PYTHON_MAJOR == 3 && PYTHON_MINOR < 8) )); then
 fi
 echo "✅ Python version $PYTHON_VERSION detected."
 
+# ---- Step 1a: Ensure python3-venv is available ----
+if ! $PYTHON_EXEC -m venv --help >/dev/null 2>&1; then
+    echo "  python3-venv module is missing. Attempting to install..."
+    if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get update
+        sudo apt-get install -y python3-venv
+    else
+        echo "❌ Could not automatically install python3-venv. Please install it manually."
+        exit 1
+    fi
+fi
+
 # ---- Step 1: Create virtual environment if it doesn't exist ----
 if [ ! -d "$ENV_DIR" ]; then
     echo "Creating virtual environment in $ENV_DIR..."

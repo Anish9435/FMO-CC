@@ -1,55 +1,63 @@
 ```
-                    GNU GENERAL PUBLIC LICENSE
-                       Version 3, 29 June 2007
+# FMCC - Fragment Molecular Orbital with Coupled Cluster (FMO-CC)
+# Dual License Version 1.0
+# Last Updated: 6 October 2025
+# Author: Anish Chakraborty
+# Contact: anish.saheb41@gmail.com
 
- Copyright (C) 2025  Anish Chakraborty
+================================================================================
+                            FMCC DUAL LICENSE
+================================================================================
 
- Everyone is permitted to copy and distribute verbatim copies
- of this license document, but changing it is not allowed.
+Preamble
+---------
+fmocc (Fragment Molecular Orbital with Coupled Cluster, FMO-CC) is distributed
+under a dual-license scheme. This approach allows the software to be freely used
+and shared in open-source projects while preserving the author's control over
+proprietary or commercial modifications.
 
-                            Preamble
+The software is made available under two licensing options:
 
- The GNU General Public License is a free, copyleft license for
- software and other kinds of works.
+1. Open Source License (GPLv3)
+2. Proprietary / Controlled Modifications License
 
- The licenses for most software and other practical works are designed
- to take away your freedom to share and change the works.  By contrast,
- the GNU General Public License is intended to guarantee your freedom to
- share and change all versions of a program--to make sure it remains free
- software for all its users.  We, the Free Software Foundation, use the
- GNU General Public License for most of our software; it applies also to
- any other work released this way by its authors.  You can apply it to
- your programs, too.
+================================================================================
+1. Open Source License (GPLv3)
+--------------------------------------------------------------------------------
+- You may use, modify, and redistribute fmocc under the terms of the GNU General
+  Public License version 3 or later.
+- Full GPLv3 text is available at: https://www.gnu.org/licenses/gpl-3.0.txt
+- Any derivative work released under GPLv3 must comply with all GPLv3 terms.
 
- [The full GPLv3 license text continues here, unchanged.
-  Full text: https://www.gnu.org/licenses/gpl-3.0.txt]
+================================================================================
+2. Proprietary / Controlled Modifications License
+--------------------------------------------------------------------------------
+- Any modification, derivative work, or redistribution under this license
+  requires **prior written consent** from the author.
+- Unauthorized modifications or redistribution of modified versions are strictly
+  prohibited.
+- Permission or commercial licensing inquiries should be directed to:
 
- END OF TERMS AND CONDITIONS
+    Anish Chakraborty
+    Email: anish.saheb41@gmail.com
 
- How to Apply These Terms to Your New Programs
+================================================================================
+3. Warranty Disclaimer
+--------------------------------------------------------------------------------
+- This software is provided "as is" without any warranty.
+- The author disclaims all implied warranties, including but not limited to
+  merchantability or fitness for a particular purpose.
+- The author is not liable for any damages resulting from the use, modification,
+  or redistribution of this software under either license.
 
- If you develop a new program, and you want it to be of the greatest
- possible use to the public, the best way to achieve this is to make it
- free software which everyone can redistribute and change under these terms.
+================================================================================
+Usage Instructions
+--------------------------------------------------------------------------------
+- For open-source contributions and modifications, comply with GPLv3 terms.
+- For proprietary or commercial modifications, contact the author for
+  explicit permission.
 
- To do so, attach the following notices to the program.  It is safest
- to attach them to the start of each source file to most effectively
- state the exclusion of warranty; and each file should have at least
- the "copyright" line and a pointer to where the full notice is found.
-
-     fmocc - Fragment Molecular Orbital with Coupled Cluster (FMO-CC)
-     Copyright (C) 2025  Anish Chakraborty
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
-
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+================================================================================
+                            END OF LICENSE
+================================================================================
 ```

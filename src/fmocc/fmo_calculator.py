@@ -262,11 +262,17 @@ class FMOCalculator:
                 hf_mo_E = np.concatenate([hf_mo_E, pad_vals])
                 self.logger.info(f"[INFO] Dimer ({ifrag}, {jfrag}): padded {n_missing} redundant orbitals as frozen")
             if self.config.fmo_type == "FMO2":
-                occ = sum(1 for e in hf_mo_E if e < 0.0)
-                virt = nmo - occ
-                self.config.occ_dimer[comb_idx] = occ
-                self.config.virt_dimer[comb_idx] = virt if virt >= 0 else 0
-                self.logger.info(f"[INFO] Dimer ({ifrag}, {jfrag}): updated occ to {occ} and virt to {virt}")
+                if not self.config.occ_dimer or self.config.occ_dimer[comb_idx] in (None, 0):
+                    occ = sum(1 for e in hf_mo_E if e < 0.0)
+                    virt = nmo - occ
+                    self.config.occ_dimer[comb_idx] = occ
+                    self.config.virt_dimer[comb_idx] = virt if virt >= 0 else 0
+                    self.logger.info(f"[INFO] Dimer ({ifrag}, {jfrag}): computed occ = {occ} and virt = {virt}")
+                else:
+                    occ = self.config.occ_dimer[comb_idx]
+                    virt = nmo - occ
+                    self.config.virt_dimer[comb_idx] = virt if virt >= 0 else 0
+                    self.logger.info(f"[INFO] Dimer ({ifrag}, {jfrag}): input occ = {occ} and virt = {virt}")
         else:
             nao = self.config.nao_dimer[comb_idx]
             nmo = self.config.nmo_dimer[comb_idx]

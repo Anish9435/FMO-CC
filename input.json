@@ -1,13 +1,13 @@
 {
   "common": {
     "method": "ICCSD-PT",
-    "conv": 1e-7,
+    "conv": 1e-5,
     "nproc": 0,
     "niter": 50,
-    "filename": "water-4_RHF_621g",
+    "filename": "3uex_631g_fmo_RHF",
     "data_dir": "/home/testuser/FMO-CC/data",
     "fmo_type": "FMO2",
-    "complex_type": "non-covalent",
+    "complex_type": "covalent",
     "basis_set": "6-31g",
     "elements": ["1", "8"]
   },
@@ -23,9 +23,10 @@
 
   "covalent": {
     "auto_active": true,
-    "active_threshold": 0.6,
+    "active_threshold": 0.7,
     "nfv_mono": [0, 0, 1, 5, 5, 4, 5, 0],
-    "nfv_dimer": [6, 5, 10, 5, 4, 9, 5, 5, 4, 4, 4, 0, 0, 1]
+    "nfv_dimer": [6, 5, 10, 5, 4, 9, 5, 5, 4, 4, 4, 0, 0, 1],
+    "occ_dimer": [31,31,32,32,32,33,33,43,43,44,44,48,54,58]
   },
 
   "fragment_index": [[1, 6], [7, 9], [10, 12]],

@@ -205,6 +205,7 @@ class FMOConfig:
         self.nfv = data.get("nfv", 0)
         self.nfv_mono = data.get("nfv_mono")
         self.nfv_dimer = data.get("nfv_dimer")
+        self.occ_dimer = data.get("occ_dimer")
         self.frag_atom = data.get("frag_atom", 3)
         self.fragment_index = data.get("fragment_index", [])
         self.coeff_file = data.get("coeff_file", "coeff.txt")
@@ -219,7 +220,8 @@ class FMOConfig:
         self.frag_elec: List[int] = []
         self.occ_mono: List[int] = []
         self.virt_mono: List[int] = []
-        self.occ_dimer: List[int] = []
+        if self.occ_dimer is None:
+            self.occ_dimer: List[int] = []
         self.virt_dimer: List[int] = []
         self.o_act_mono: List[int] = []
         self.v_act_mono: List[int] = []
@@ -269,11 +271,14 @@ class FMOConfig:
         self.frag_elec = self._compute_frag_elec(occ_mono)
         self.occ_mono = occ_mono if self.complex_type == "covalent" else [int(e // 2) for e in self.frag_elec]
         self.virt_mono = [nmo - occ for nmo, occ in zip(self.nmo_mono, self.occ_mono)]
-        if self.complex_type == "covalent" and self.fmo_type == "FMO2":
-            self.occ_dimer = [0] * ndimer
-            self.virt_dimer = [0] * ndimer
+        if not self.occ_dimer:
+            if self.complex_type == "covalent" and self.fmo_type == "FMO2":
+                self.occ_dimer = [0] * ndimer
+                self.virt_dimer = [0] * ndimer
+            else:
+                self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
+                self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
         else:
-            self.occ_dimer = [sum(combo) for combo in combinations(self.occ_mono, 2)]
             self.virt_dimer = [nmo - occ for nmo, occ in zip(self.nmo_dimer, self.occ_dimer)]
         nmer: List[int] = []
         if self.fragment_index and self.complex_type == "non-covalent":

@@ -161,7 +161,7 @@ class FMOCalculator:
 
         if self.config.auto_active:
             self.logger.info(f"Auto selecting active orbitals for monomer {ifrag}")
-            self.config.auto_set_active_orbitals(frag_idx, hf_mo_E, occ, virt, self.config.active_threshold)
+            self.config.auto_set_active_orbitals(frag_idx, hf_mo_E, occ, self.config.active_threshold)
             o_act = self.config.o_act_mono[frag_idx]
             v_act = self.config.v_act_mono[frag_idx]
         else:
@@ -278,7 +278,7 @@ class FMOCalculator:
 
         if self.config.auto_active:
             self.logger.info(f"Auto selecting active orbitals for Dimer ({ifrag}, {jfrag})")
-            self.config.auto_set_active_orbitals(comb_idx, hf_mo_E, occ, virt, self.config.active_threshold, is_dimer=True)
+            self.config.auto_set_active_orbitals(comb_idx, hf_mo_E, occ, self.config.active_threshold, is_dimer=True)
             o_act = self.config.o_act_dimer[comb_idx]
             v_act = self.config.v_act_dimer[comb_idx]
         else:

@@ -199,7 +199,7 @@ class FMOConfig:
         self.nproc = int(data.get("nproc", 0))
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)
-        self.auto_active = data.get("auto_active", False)
+        self.auto_active = data.get("auto_active", True)
         self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)
@@ -329,7 +329,7 @@ class FMOConfig:
         self.logger.info(f"[SYSTEM INFO] Number of frozen virtual orbitals for dimer: {self.nfv_dimer} and for monomer: {self.nfv_mono}")
         self.logger.info(f"[SYSTEM INFO] Total number of electrons in fragments: {self.frag_elec}")
 
-    def auto_set_active_orbitals(self, idx: int, hf_mo_E: List[float], occ: int, virt: int, threshold: float, is_dimer: bool = False) -> None:
+    def auto_set_active_orbitals(self, idx: int, hf_mo_E: List[float], occ: int, threshold: float, is_dimer: bool = False) -> None:
         """
         Automatically determine active orbitals for a fragment based on orbital energies and threshold closeness to HOMO/LUMO.
 

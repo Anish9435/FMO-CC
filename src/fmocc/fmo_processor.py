@@ -188,19 +188,19 @@ class FMOProcessor:
         if self.config.fmo_type == "FMO2":
             conv = 627.5095
             if self.config.method == "MP2":
-                self.logger.info(f"MP2 level IFIEs (Ha / Kcal/mol):")
+                self.logger.info(f"MP2 level IFIEs (Ha | Kcal/mol):")
                 for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr):
                     Ei_mp2 = mono_mp2_corr[fi]
                     Ej_mp2 = mono_mp2_corr[fj]
                     IFIE_mp2 = Eij_mp2 - Ei_mp2 - Ej_mp2
-                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_mp2} / {IFIE_mp2 * conv}")
+                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_mp2} | {IFIE_mp2 * conv}")
             else:
-                self.logger.info(f"Correlation level IFIEs (Ha / Kcal/mol):")
+                self.logger.info(f"Correlation level IFIEs (Ha | Kcal/mol):")
                 for (fi, fj), Eij_cc in dimer_pairs.items():
                     Ei_cc = mono_cc_corr[fi]
                     Ej_cc = mono_cc_corr[fj]
                     IFIE_cc = Eij_cc - Ei_cc - Ej_cc
-                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_cc} / {IFIE_cc * conv}")
+                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_cc} | {IFIE_cc * conv}")
 
         end = time.time()
         self.logger.info(f"Parallel overall time: {end - start} seconds")

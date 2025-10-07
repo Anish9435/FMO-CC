@@ -101,6 +101,7 @@ run_fmo_cc -c my_config.json
 | `nfv`                   | Number of frozen virtual orbitals                                        |
 | `nfv_mono`              | List of frozen virtual orbitals for the fragments                        |
 | `nfv_dimer`             | List of frozen virtual orbitals for the fragment pairs                   |
+| `occ_dimer`             | List of occupied MOs for fragment pairs (recommended for covalent sys)   |
 | `basis_set`             | Basis set to use (e.g., `6-21g`, `cc-pVDZ`, etc.)                        |
 | `niter`                 | Maximum number of CC iterations                                          |
 | `frag_atom`             | Number of atoms per fragment (used in noncovalent fragmentation mode)    |

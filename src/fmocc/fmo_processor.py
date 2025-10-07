@@ -4,6 +4,8 @@ Orchestration of FMO-CC calculations.
 This module implements the FMOProcessor class, responsible for managing and orchestrating
 the full FMO-CC calculation workflow. It handles configuration management, data extraction
 from GAMESS output, energy computations for monomers and dimers, and aggregation of results.
+Also, a limitation on the size of input files based on the number of atoms is enforced to ensure
+efficient processing.
 
 Key Responsibilities
 --------------------

@@ -29,6 +29,5 @@
   },
 
   "fragment_index": [[1, 6], [7, 9], [10, 12]],
-  "icharge": [0, 0, 0],
-  "integral_transform": "incore"
+  "icharge": [0, 0, 0]
 }

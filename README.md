@@ -110,7 +110,6 @@ run_fmo_cc -c my_config.json
 | `data_dir`              | Path to directory containing GAMESS output files                         |
 | `fragment_index`        | Explicit fragment index ranges (for custom/nonstandard fragmentation)    |
 | `icharge`               | List of charges for each fragment                                        |
-| `integral_transform`    | Mode for integral transformation: `incore` or `disk`                     |
 | `fmo_type`              | Fragment Molecular Orbital type: `FMO1`, `FMO2`, etc.                    |
 | `complex_type`          | specification of the complex: `covalent`, `non-covalent`, etc.           |
 

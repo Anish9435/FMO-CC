@@ -210,7 +210,7 @@ class FMOExtractor:
             for line in infile:
                 if "iFrag" in line and "jFrag" in line:
                     count += 1
-        self.logger.info(f"Counted available dimers: {count}")
+        self.logger.info(f"[DIMER INFO] Counted available dimers: {count}")
         return count
 
     def get_tot_rhf(self, fmo_type):
@@ -310,7 +310,7 @@ class FMOExtractor:
         self.logger.info(f"Raw parsed frag_id={frag_id}, nmo_mono={nmo_mono}")
         id_to_nmo = dict(zip(frag_id, nmo_mono))
         ordered_nmo = [id_to_nmo[i] for i in range(1, nfrag+1)]
-        self.logger.info(f"Extracted monomer NMOs: {ordered_nmo}")
+        self.logger.info(f"[INFO] Extracted monomer NMOs: {ordered_nmo}")
         return ordered_nmo
     
     def get_nelec(self):
@@ -388,7 +388,7 @@ class FMOExtractor:
                 break
         with open(outfile1, 'w') as outf:
             outf.writelines(content)
-        self.logger.info(f"Extracted coefficients to {outfile1}")
+        self.logger.info(f"[INFO] Extracted coefficients to {outfile1}")
         return self.ifrag, self.jfrag, self.Erhf, lnum
     
     def bare_hamiltonian(self, lnum, nmer, outfile2):
@@ -444,7 +444,7 @@ class FMOExtractor:
                 break
         with open(outfile2, 'w') as outf:
             outf.writelines(content)
-        self.logger.info(f"Extracted bare Hamiltonian to {outfile2}")
+        self.logger.info(f"[INFO] Extracted bare Hamiltonian to {outfile2}")
         return self.ifrag, self.jfrag, self.Erhf
     
     def twoelecint(self, lnum, nmer, outfile3):
@@ -501,7 +501,7 @@ class FMOExtractor:
                 break
         with open(outfile3, 'w') as outf:
             outf.writelines(content)
-        self.logger.info(f"Extracted two-electron integrals to {outfile3}")
+        self.logger.info(f"[INFO] Extracted two-electron integrals to {outfile3}")
         return self.ifrag, self.jfrag, self.Erhf, lnum
         
     def _parse_nao_nmo_from_coeff(self, lines):
@@ -648,7 +648,7 @@ class FMOExtractor:
                     except IndexError:
                         continue
         elements = np.transpose(elements)
-        self.logger.info(f"Extracted coefficients with shape {elements.shape} from {self.outfile1}")
+        self.logger.info(f"[INFO] Extracted coefficients with shape {elements.shape} from {self.outfile1}")
         return elements
 
     def get_orb_energy(self, nao, nmo, outfile1):
@@ -725,7 +725,7 @@ class FMOExtractor:
                     except IndexError:
                         continue
         orb_energy = np.array(orb_energy)
-        self.logger.info(f"Extracted orbital energies with shape {orb_energy.shape} from {self.outfile1}")
+        self.logger.info(f"[INFO] Extracted orbital energies with shape {orb_energy.shape} from {self.outfile1}")
         return orb_energy
 
     def get_1e_parameter(self, nao, outfile2):
@@ -772,7 +772,7 @@ class FMOExtractor:
                     elements[idx2,idx1] = float(val)       
                 except IndexError:                                                                                                          
                     continue
-        self.logger.info(f"Extracted one-electron parameters with shape {elements.shape} from {self.outfile2}")
+        self.logger.info(f"[INFO] Extracted one-electron parameters with shape {elements.shape} from {self.outfile2}")
         return elements
 
     def twoelecint_process(self, outfile3, tempfile):
@@ -802,7 +802,7 @@ class FMOExtractor:
                 for line in lines:
                     if not any(s in line for s in self.string_list):
                         outf.write(line)
-            self.logger.info(f"Processed two-electron integrals and saved to {tempfile}")
+            self.logger.info(f"[INFO] Processed two-electron integrals and saved to {tempfile}")
             return 0
         except Exception as e:
             raise RuntimeError(f"Error processing two-electron integrals: {e}")
@@ -860,7 +860,7 @@ class FMOExtractor:
                 twoeint[int(idx4)-1,int(idx3)-1,int(idx1)-1,int(idx2)-1] = cp.deepcopy(float(val))
                 twoeint[int(idx1)-1,int(idx2)-1,int(idx4)-1,int(idx3)-1] = cp.deepcopy(float(val))
                 twoeint[int(idx3)-1,int(idx4)-1,int(idx2)-1,int(idx1)-1] = cp.deepcopy(float(val))
-            self.logger.info(f"Read two-electron integrals with shape {twoeint.shape} from {tempfile2}")
+            self.logger.info(f"[INFO] Read two-electron integrals with shape {twoeint.shape} from {tempfile2}")
             return twoeint
         except Exception as e:
             raise RuntimeError(f"Error reading 2e integrals from {tempfile2}: {e}")
@@ -877,6 +877,6 @@ class FMOExtractor:
             if os.path.exists(f):
                 try:
                     os.remove(f)
-                    self.logger.info(f"Deleted temporary file {f}")
+                    self.logger.info(f"[DELETION INFO] Deleted temporary file {f}")
                 except OSError as e:
-                    self.logger.warning(f"Warning: Could not delete {f}: {e}")
+                    self.logger.warning(f"[DELETION WARNING] Could not delete {f}: {e}")

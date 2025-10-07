@@ -154,7 +154,7 @@ class CCParallel:
         """
         del_E = E_ccd - E_old
         if abs(eps) <= conv and abs(del_E) <= conv:
-            self.logger.info(f"CCSD converged at cycle {x+1}, correlation energy: {E_ccd}")
+            self.logger.info(f"[CONVERGENCE INFO] CCSD converged at cycle {x+1}, correlation energy: {E_ccd}")
             return True, E_ccd
         self.logger.info(f"Cycle {x+1}: t1+t2={eps}, ΔE={del_E}, E_corr={E_ccd}")
         return False, E_ccd
@@ -214,7 +214,7 @@ class CCParallel:
         ValueError
             If the calculation method is not 'CCSD' or 'ICCSD-PT'.
         """
-        self.logger.info(f"Starting {calc} calculation with {self.nproc} processors")
+        self.logger.info(f"[CALC INFO] Starting {calc} calculation with {self.nproc} processors")
         for x in range(n_iter):
             if calc == 'CCSD':
                 self.logger.info(f"|| -------------- CCSD --------------- ||")
@@ -356,5 +356,5 @@ class CCParallel:
                 else:
                     E_old = E_ccd
                     
-        self.logger.info(f"CC Calculation completed after {x+1} iterations")
+        self.logger.info(f"[CALC INFO] CC Calculation completed after {x+1} iterations")
         return E_ccd, x

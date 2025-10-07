@@ -134,11 +134,11 @@ class HelperFunction:
                             shutil.rmtree(pycache_path)
                             deleted_count += 1
                         except Exception as e:
-                            FMOCC_LOGGER.warning(f"Failed to delete {pycache_path}: {str(e)}")
-            FMOCC_LOGGER.info(f"Total __pycache__ directories deleted: {deleted_count}")
+                            FMOCC_LOGGER.warning(f"[WARNING] Failed to delete {pycache_path}: {str(e)}")
+            FMOCC_LOGGER.info(f"[INFO] Total __pycache__ directories deleted: {deleted_count}")
             return deleted_count
         except Exception as e:
-            FMOCC_LOGGER.error(f"Error while clearing __pycache__ directories in {directory}: {str(e)}")
+            FMOCC_LOGGER.error(f"[ERROR] Error while clearing __pycache__ directories in {directory}: {str(e)}")
             return deleted_count
 
 class Symmetrizer:

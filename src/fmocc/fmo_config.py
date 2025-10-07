@@ -199,7 +199,7 @@ class FMOConfig:
         self.nproc = int(data.get("nproc", 0))
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)
-        self.auto_active = data.get("auto_active", True)
+        self.auto_active = data.get("auto_active", False)
         self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)

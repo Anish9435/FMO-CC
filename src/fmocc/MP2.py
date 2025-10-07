@@ -35,7 +35,7 @@ class MP2Calculator:
         hf_mo_E = cp.deepcopy(hf_mo_E[nfo:])
         Fock_mo = cp.deepcopy(Fock_mo[nfo:, nfo:])
         gc.collect()
-        self.logger.debug(f"Froze {nfo} occupied orbitals")
+        self.logger.debug(f"[DEBUG INFO] Froze {nfo} occupied orbitals")
         return occ, nmo, twoelecint_mo, Fock_mo, hf_mo_E
 
     def virt_frozen(self, virt, nmo, nfo, nfv, nao, twoelecint_mo, Fock_mo, hf_mo_E):
@@ -46,7 +46,7 @@ class MP2Calculator:
         nmo = nmo - nfv
         virt = virt - nfv
         gc.collect()
-        self.logger.debug(f"Froze {nfv} virtual orbitals")
+        self.logger.debug(f"[DEBUG INFO] Froze {nfv} virtual orbitals")
         return nao, nmo, virt, twoelecint_mo, Fock_mo, hf_mo_E
 
     def guess_t1(self, occ, virt, nmo, hf_mo_E, Fock_mo):
@@ -56,7 +56,7 @@ class MP2Calculator:
             for a in range(occ, nmo):
                 D1[i, a - occ] = hf_mo_E[i] - hf_mo_E[a]
                 t1[i, a - occ] = Fock_mo[i, a] / D1[i, a - occ]
-        self.logger.debug("Computed initial t1 guess")
+        self.logger.debug("[DEBUG INFO] Computed initial t1 guess")
         return t1, D1
 
     def guess_t2(self, occ, virt, nmo, hf_mo_E, twoelecint_mo):
@@ -68,7 +68,7 @@ class MP2Calculator:
                     for b in range(occ, nmo):
                         D2[i, j, a - occ, b - occ] = hf_mo_E[i] + hf_mo_E[j] - hf_mo_E[a] - hf_mo_E[b]
                         t2[i, j, a - occ, b - occ] = twoelecint_mo[i, j, a, b] / D2[i, j, a - occ, b - occ]
-        self.logger.debug("Computed initial t2 guess")
+        self.logger.debug("[DEBUG INFO] Computed initial t2 guess")
         return t2, D2
 
     def guess_so(self, occ, virt, nmo, o_act, hf_mo_E, twoelecint_mo):
@@ -80,7 +80,7 @@ class MP2Calculator:
                     for k in range(occ - o_act, occ):
                         Do[i, j, a, k - occ + o_act] = hf_mo_E[i] + hf_mo_E[j] - hf_mo_E[a + occ] + hf_mo_E[k]
                         So[i, j, a, k - occ + o_act] = twoelecint_mo[i, j, a + occ, k] / Do[i, j, a, k - occ + o_act]
-        self.logger.debug("Computed initial So guess")
+        self.logger.debug("[DEBUG INFO] Computed initial So guess")
         return So, Do
 
     def guess_sv(self, occ, virt, nmo, v_act, hf_mo_E, twoelecint_mo):
@@ -92,7 +92,7 @@ class MP2Calculator:
                     for b in range(virt):
                         Dv[i, c, a, b] = hf_mo_E[i] - hf_mo_E[c + occ] - hf_mo_E[a + occ] - hf_mo_E[b + occ]
                         Sv[i, c, a, b] = twoelecint_mo[i, c + occ, a + occ, b + occ] / Dv[i, c, a, b]
-        self.logger.debug("Computed initial Sv guess")
+        self.logger.debug("[DEBUG INFO] Computed initial Sv guess")
         return Sv, Dv
 
     def MP2_energy(self, occ, nao, t2, twoelecint_mo, E_hf):

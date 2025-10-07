@@ -89,9 +89,9 @@ class FMOProcessor:
             else:
                 max_size = 50  # 50GB for > 60 atoms
             if file_size > max_size:
-                self.logger.error(f"{file_desc} file {file_path} size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
+                self.logger.error(f"[FILE ERROR] {file_desc} file {file_path} size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
                 raise ValueError(f"{file_desc} file size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
-            self.logger.info(f"{file_desc} file {file_path} size ({file_size:.2f} GB) is within limit ({max_size} GB) for {total_atoms} atoms")
+            self.logger.info(f"[FILE INFO] {file_desc} file {file_path} size ({file_size:.2f} GB) is within limit ({max_size} GB) for {total_atoms} atoms")
 
         if not occ_mono and self.config.complex_type == "non-covalent":
             occ_mono = [0]*nfrag
@@ -102,7 +102,7 @@ class FMOProcessor:
         else:
             self.config.update_from_gamess(nfrag, nao_mono, occ_mono)
         self.calculator = FMOCalculator(self.config, self.extractor, self)
-        self.logger.info(f"Initialized FMOProcessor with {nfrag} fragments and nao_mono: {nao_mono}")
+        self.logger.info(f"[INFO] Initialized FMOProcessor with {nfrag} fragments and nao_mono: {nao_mono}")
 
     def run(self):
         """Execute the FMO calculation for monomers and dimers.
@@ -134,7 +134,7 @@ class FMOProcessor:
             comb_expected = list(combinations(seq, 2))
             if ndimers_actual != len(comb_expected):
                 self.logger.info(
-                    f"Dimer count adjusted: expected {len(comb_expected)}, "
+                    f"[DIMER INFO] Dimer count adjusted: expected {len(comb_expected)}, "
                     f"found {ndimers_actual} — regenerating dimer list"
                 )
                 comb = [(0, 0)] * ndimers_actual
@@ -145,14 +145,14 @@ class FMOProcessor:
                 dimer_rhf.append(Erhf)
                 dimer_mp2_corr.append(E_mp2)
                 dimer_pairs[(fi, fj)] = E_ccd
-                self.logger.info("Completed dimer calculation")
+                self.logger.info(f"[INFO] Completed dimer calculation")
 
         for i in range(self.config.nfrag):
             Erhf, E_mp2, E_ccd, lnum1, lnum2, frag_id = self.calculator.compute_monomer(i, lnum1, lnum2)
             mono_rhf.append(Erhf)
             mono_mp2_corr[frag_id] = E_mp2
             mono_cc_corr[frag_id] = E_ccd
-            self.logger.info("Completed monomer calculation")
+            self.logger.info(f"[INFO] Completed monomer calculation")
 
         FMO_RHF = self.extractor.get_tot_rhf(self.config.fmo_type)
         if self.config.fmo_type == "FMO2":
@@ -171,38 +171,38 @@ class FMOProcessor:
             fmo_mp2_corr = sum(mono_mp2_corr.values())
             fmo_cc_corr = sum(mono_cc_corr.values())
 
-        self.logger.info(f"Total RHF energy: {FMO_RHF}")
+        self.logger.info(f"[ENERGY INFO] Total RHF energy: {FMO_RHF}")
         if self.config.method == "MP2":
             corr_energy = fmo_mp2_corr
             Tot_MP2 = FMO_RHF + fmo_mp2_corr
-            self.logger.info(f"MP2 correlation energy: {corr_energy}, Total MP2 energy: {Tot_MP2}")
+            self.logger.info(f"[ENERGY INFO] MP2 correlation energy: {corr_energy}, Total MP2 energy: {Tot_MP2}")
         else:
             corr_energy = fmo_cc_corr
             Tot_CC = FMO_RHF + fmo_cc_corr
-            self.logger.info(f"{self.config.method} correlation energy: {corr_energy}, Total {self.config.method} energy: {Tot_CC}")
+            self.logger.info(f"[ENERGY INFO] {self.config.method} correlation energy: {corr_energy}, Total {self.config.method} energy: {Tot_CC}")
 
-        self.logger.info(f"Monomer {self.config.method} correlation energies (Ha):")
+        self.logger.info(f"[ENERGY INFO] Monomer {self.config.method} correlation energies (Ha):")
         for frag in sorted(mono_cc_corr):
-            self.logger.info(f"Fragment {frag}: {mono_cc_corr[frag]}")
+            self.logger.info(f"[ENERGY INFO] Fragment {frag}: {mono_cc_corr[frag]}")
         
         if self.config.fmo_type == "FMO2":
             conv = 627.5095
             if self.config.method == "MP2":
-                self.logger.info(f"MP2 level IFIEs (Ha | Kcal/mol):")
+                self.logger.info(f"[ENERGY INFO] MP2 level IFIEs (Ha | Kcal/mol):")
                 for (fi, fj), Eij_mp2 in zip(dimer_pairs.keys(), dimer_mp2_corr):
                     Ei_mp2 = mono_mp2_corr[fi]
                     Ej_mp2 = mono_mp2_corr[fj]
                     IFIE_mp2 = Eij_mp2 - Ei_mp2 - Ej_mp2
-                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_mp2} | {IFIE_mp2 * conv}")
+                    self.logger.info(f"[ENERGY INFO] Fragments ({fi}-{fj}): {IFIE_mp2} | {IFIE_mp2 * conv}")
             else:
-                self.logger.info(f"Correlation level IFIEs (Ha | Kcal/mol):")
+                self.logger.info(f"[ENERGY INFO] Correlation level IFIEs (Ha | Kcal/mol):")
                 for (fi, fj), Eij_cc in dimer_pairs.items():
                     Ei_cc = mono_cc_corr[fi]
                     Ej_cc = mono_cc_corr[fj]
                     IFIE_cc = Eij_cc - Ei_cc - Ej_cc
-                    self.logger.info(f"Fragments ({fi}-{fj}): {IFIE_cc} | {IFIE_cc * conv}")
+                    self.logger.info(f"[ENERGY INFO] Fragments ({fi}-{fj}): {IFIE_cc} | {IFIE_cc * conv}")
 
         end = time.time()
-        self.logger.info(f"Parallel overall time: {end - start} seconds")
+        self.logger.info(f"[TIMING INFO] Parallel overall time: {end - start} seconds")
 
         return fmo_cc_corr, Tot_CC

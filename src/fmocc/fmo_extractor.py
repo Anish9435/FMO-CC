@@ -276,7 +276,6 @@ class FMOExtractor:
                     occ_mono.append(val3)
             else:
                 break
-        self.logger.info(f"Extracted nao1: {nao1}, natoms: {natoms}")
         return nao1, natoms, occ_mono
     
     def get_frag_nmos(self, lnum, nfrag):

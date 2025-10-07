@@ -136,15 +136,17 @@ class FMOConfig:
         
         if "common" in data:
             common = data.get("common", {})
-            ctype = common.get("complex_type", data.get("complex_type", "non-covalent"))
-            branch_key = "covalent" if "covalent" in ctype else "non-covalent"
-            branch = data.get(branch_key, {})
+            ctype = common.get("complex_type", "non-covalent")
+            if ctype == "covalent":
+                branch = data.get("covalent") or data.get("covalent".replace("-", "_"), {})
+            else:
+                branch = data.get("non-covalent") or data.get("non-covalent", {})
             merged = {**common, **branch}
             for key, val in data.items():
                 if key not in ["common", "covalent", "non-covalent"]:
                     merged[key] = val
             data = merged
-        self.data = data
+            self.data = data
         
         required_keys = ["elements", "method", "conv", "basis_set", "niter", "filename", "icharge", "fmo_type", "complex_type"]
         for key in required_keys:
@@ -197,7 +199,7 @@ class FMOConfig:
         self.nproc = int(data.get("nproc", 0))
         self.o_act = data.get("occ_act", 1)
         self.v_act = data.get("virt_act", 1)
-        self.auto_active = data.get("auto_active", True)
+        self.auto_active = data.get("auto_active", False)
         self.active_threshold = float(data.get("active_threshold", 0.5))
         self.nfo = data.get("nfo", 0)
         self.nfv = data.get("nfv", 0)
@@ -316,16 +318,16 @@ class FMOConfig:
             self.v_act_dimer.sort()
         self.nfo_dimer.sort()
 
-        self.logger.info(f"system type: {self.complex_type}")
-        self.logger.info(f"Method: {self.method}, Basis set: {self.basis_set}, Convergence: {self.conv}, Max Iter: {self.niter}")
-        self.logger.info(f"Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")
-        self.logger.info(f"Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
-        self.logger.info(f"Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
-        self.logger.info(f"Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")
-        self.logger.info(f"Active virtual orbitals for dimer: {self.v_act_dimer} and for monomer: {self.v_act_mono}")
-        self.logger.info(f"Number of frozen occupied orbitals for dimer: {self.nfo_dimer} and for monomer: {self.nfo_mono}")
-        self.logger.info(f"Number of frozen virtual orbitals for dimer: {self.nfv_dimer} and for monomer: {self.nfv_mono}")
-        self.logger.info(f"Total number of electrons in fragments: {self.frag_elec}")
+        self.logger.info(f"[CALC INFO] system type: {self.complex_type}")
+        self.logger.info(f"[CALC INFO] Method: {self.method}, Basis set: {self.basis_set}, Convergence: {self.conv}, Max Iter: {self.niter}")
+        self.logger.info(f"[SYSTEM INFO] Updated config with nfrag={nfrag}, nao_mono={nao_mono}, nmo_mono={self.nmo_mono}")
+        self.logger.info(f"[SYSTEM INFO] Number of occupied orbitals for dimer: {self.occ_dimer} and for monomer: {self.occ_mono}")
+        self.logger.info(f"[SYSTEM INFO] Number of virtual orbitals for dimer: {self.virt_dimer} and for monomer: {self.virt_mono}")
+        self.logger.info(f"[SYSTEM INFO] Active occupied orbitals for dimer: {self.o_act_dimer} and for monomer: {self.o_act_mono}")
+        self.logger.info(f"[SYSTEM INFO] Active virtual orbitals for dimer: {self.v_act_dimer} and for monomer: {self.v_act_mono}")
+        self.logger.info(f"[SYSTEM INFO] Number of frozen occupied orbitals for dimer: {self.nfo_dimer} and for monomer: {self.nfo_mono}")
+        self.logger.info(f"[SYSTEM INFO] Number of frozen virtual orbitals for dimer: {self.nfv_dimer} and for monomer: {self.nfv_mono}")
+        self.logger.info(f"[SYSTEM INFO] Total number of electrons in fragments: {self.frag_elec}")
 
     def auto_set_active_orbitals(self, idx: int, hf_mo_E: List[float], occ: int, virt: int, threshold: float, is_dimer: bool = False) -> None:
         """
@@ -418,8 +420,8 @@ class FMOConfig:
             if not occ_mono:
                 self.logger.error(f"No occupied orbital has been detected!!")
             result = [2*na for na in occ_mono]
-            self.logger.info(f" Covalent System: occ_mono: {occ_mono} and fragment electron: {result}")
-        
+            self.logger.info(f"[SYSTEM INFO] Covalent System: occ_mono: {occ_mono} and fragment electron: {result}")
+
         else:
             pattern = self.data.get("atom_pattern", [])
             if not pattern:
@@ -431,5 +433,5 @@ class FMOConfig:
                 atoms = [pattern[i % len(pattern)] for i in range(length)]
                 frag_elec = sum(elec_map[a] for a in atoms)
                 result.append(frag_elec)
-        self.logger.info(f"Computed fragment electrons: {result}")
+        self.logger.info(f"[SYSTEM INFO] Computed fragment electrons: {result}")
         return result

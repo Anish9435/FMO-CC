@@ -148,7 +148,6 @@ FMO-CC/
 │
 ├── Scripts/                         # CLI scripts and execution helpers
 │   ├── run_fmo_cc.py                # Main launcher for FMO-CC calculations
-│   ├── run_gamess.sh                # Wrapper script for GAMESS runs
 │   └── twoeint_process.sh           # Post-processing for two-electron integrals
 │
 ├── pyproject.toml                   # Packaging config (PEP 621 / pip install)

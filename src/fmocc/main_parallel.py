@@ -231,9 +231,11 @@ class CCParallel:
             If the calculation method is not 'CCSD', 'ICCSD', or 'ICCSD-PT'.
         """
         self.logger.info(f"[CALC INFO] Starting {calc} calculation with {self.nproc} processors")
-        tasks_per_iter = 10 if calc != 'ICCSD' else 12
+        tasks_per_iter = 10
+        if calc == 'ICCSD':
+            tasks_per_iter = 12
+
         nproc = min(self.nproc, tasks_per_iter)
-        
         with Pool(processes=nproc, maxtasksperchild=10) as pool:
             for x in range(n_iter):
                 tau = np.empty_like(t2)
@@ -254,7 +256,6 @@ class CCParallel:
                         (self.diagram_builder.update8, (occ, nao, t1, t2, twoelecint_mo)),
                         (self.diagram_builder.update9, (occ, nao, tau, twoelecint_mo)),
                     ]
-                    #results = pool.starmap(_execute_tasks, tasks)
                     results = pool.starmap_async(_execute_tasks, tasks).get()
 
                     R_ia1, R_ijab1 = results[0]
@@ -296,7 +297,6 @@ class CCParallel:
                         (self.diagram_builder.Sv_diagrams, (occ, v_act, nao, Sv, t2, Fock_mo, twoelecint_mo)),
                         (self.diagram_builder.So_diagrams, (occ, o_act, nao, So, t2, Fock_mo, twoelecint_mo)),
                     ]
-                    #results = pool.starmap(_execute_tasks, tasks)
                     results = pool.starmap_async(_execute_tasks, tasks).get()
 
                     R_ia1, R_ijab1 = results[0]
@@ -344,8 +344,7 @@ class CCParallel:
                         (self.diagram_builder.update8, (occ, nao, t1, t2, twoelecint_mo)),
                         (self.diagram_builder.update9, (occ, nao, tau, twoelecint_mo)),
                     ]
-                    #results = pool.starmap(_execute_tasks, tasks)
-                    results = pool.starmap_async(_execute_tasks, tasks).get()
+                    results = pool.starmap_async(_execute_tasks, tasks).get() 
 
                     R_ia1, R_ijab1 = results[0]
                     R_ia2, R_ijab2 = results[1]

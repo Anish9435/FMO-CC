@@ -1,41 +1,25 @@
-# FMCC - Fragment Molecular Orbital with Coupled Cluster (FMO-CC)
-# License: GNU General Public License v3.0 (GPLv3)
-# Last Updated: 8 October 2025
-# Author: Anish Chakraborty
-# Contact: anish.saheb41@gmail.com
+GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
 
-================================================================================
-                               FMOCC LICENSE (GPLv3)
-================================================================================
+Copyright (C) 2025 Anish Chakraborty
+Email: anish.saheb41@gmail.com
 
-fmocc (Fragment Molecular Orbital with Coupled Cluster, FMO-CC) is distributed
-under the terms of the GNU General Public License version 3 (GPLv3) or any later
-version. This ensures that the software remains free and open-source, allowing
-anyone to use, modify, and redistribute it under the same license terms.
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
 
-================================================================================
-Permissions and Conditions
---------------------------------------------------------------------------------
-- You may use, copy, modify, and redistribute fmocc in any medium or format.
-- Any derivative work or redistribution must also be licensed under GPLv3.
-- Full GPLv3 text is available at: https://www.gnu.org/licenses/gpl-3.0.txt
-- All modifications and contributions must comply with GPLv3 terms.
+Preamble
+---------
 
-================================================================================
-Warranty Disclaimer
---------------------------------------------------------------------------------
-- fmocc is provided "as is", without any warranty of any kind.
-- The author disclaims all implied warranties, including but not limited to
-  merchantability or fitness for a particular purpose.
-- The author is not liable for any damages resulting from the use, modification,
-  or redistribution of this software.
+fmocc (Fragment Molecular Orbital with Coupled Cluster, FMO-CC) is free software: 
+you can redistribute it and/or modify it under the terms of the GNU General Public 
+License as published by the Free Software Foundation, either version 3 of the License, 
+or (at your option) any later version.
 
-================================================================================
-Usage Instructions
---------------------------------------------------------------------------------
-- To contribute, modify, or redistribute, ensure compliance with GPLv3.
-- For any questions, you may contact the author at the email above.
+fmocc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; 
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+PURPOSE. See the GNU General Public License for more details.
 
-================================================================================
-                               END OF LICENSE
+You should have received a copy of the GNU General Public License along with fmocc. 
+If not, see <https://www.gnu.org/licenses/>.
+
 ================================================================================

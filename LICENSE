@@ -1,61 +1,41 @@
 # FMCC - Fragment Molecular Orbital with Coupled Cluster (FMO-CC)
-# Dual License Version 1.0
-# Last Updated: 6 October 2025
+# License: GNU General Public License v3.0 (GPLv3)
+# Last Updated: 8 October 2025
 # Author: Anish Chakraborty
 # Contact: anish.saheb41@gmail.com
 
 ================================================================================
-                            FMCC DUAL LICENSE
+                               FMCC LICENSE (GPLv3)
 ================================================================================
 
-Preamble
----------
 fmocc (Fragment Molecular Orbital with Coupled Cluster, FMO-CC) is distributed
-under a dual-license scheme. This approach allows the software to be freely used
-and shared in open-source projects while preserving the author's control over
-proprietary or commercial modifications.
-
-The software is made available under two licensing options:
-
-1. Open Source License (GPLv3)
-2. Proprietary / Controlled Modifications License
+under the terms of the GNU General Public License version 3 (GPLv3) or any later
+version. This ensures that the software remains free and open-source, allowing
+anyone to use, modify, and redistribute it under the same license terms.
 
 ================================================================================
-1. Open Source License (GPLv3)
+Permissions and Conditions
 --------------------------------------------------------------------------------
-- You may use, modify, and redistribute fmocc under the terms of the GNU General
-  Public License version 3 or later.
+- You may use, copy, modify, and redistribute fmocc in any medium or format.
+- Any derivative work or redistribution must also be licensed under GPLv3.
 - Full GPLv3 text is available at: https://www.gnu.org/licenses/gpl-3.0.txt
-- Any derivative work released under GPLv3 must comply with all GPLv3 terms.
+- All modifications and contributions must comply with GPLv3 terms.
 
 ================================================================================
-2. Proprietary / Controlled Modifications License
+Warranty Disclaimer
 --------------------------------------------------------------------------------
-- Any modification, derivative work, or redistribution under this license
-  requires **prior written consent** from the author.
-- Unauthorized modifications or redistribution of modified versions are strictly
-  prohibited.
-- Permission or commercial licensing inquiries should be directed to:
-
-    Anish Chakraborty
-    Email: anish.saheb41@gmail.com
-
-================================================================================
-3. Warranty Disclaimer
---------------------------------------------------------------------------------
-- This software is provided "as is" without any warranty.
+- fmocc is provided "as is", without any warranty of any kind.
 - The author disclaims all implied warranties, including but not limited to
   merchantability or fitness for a particular purpose.
 - The author is not liable for any damages resulting from the use, modification,
-  or redistribution of this software under either license.
+  or redistribution of this software.
 
 ================================================================================
 Usage Instructions
 --------------------------------------------------------------------------------
-- For open-source contributions and modifications, comply with GPLv3 terms.
-- For proprietary or commercial modifications, contact the author for
-  explicit permission.
+- To contribute, modify, or redistribute, ensure compliance with GPLv3.
+- For any questions, you may contact the author at the email above.
 
 ================================================================================
-                            END OF LICENSE
+                               END OF LICENSE
 ================================================================================

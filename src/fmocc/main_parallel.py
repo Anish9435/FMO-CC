@@ -20,11 +20,27 @@ Dependencies
     - External library: numpy
     - Local modules: diagrams (DiagramBuilder), utils (Symmetrizer, AmplitudeUpdater, FMOCC_LOGGER)
 """
+import os
 import copy as cp
 import numpy as np
+import multiprocessing
 from multiprocessing import Pool, cpu_count
 from .diagrams import DiagramBuilder
 from .utils import Symmetrizer, AmplitudeUpdater, FMOCC_LOGGER
+
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
+try:
+    multiprocessing.set_start_method('fork', force=True)
+except RuntimeError:
+    pass
+
+def _execute_tasks(func, args):
+    """Helper function to execute a function with given arguments."""
+    return func(*args)
 
 class CCParallel:
     """Parallel coupled-cluster (CC) calculator for FMO calculations.
@@ -212,149 +228,149 @@ class CCParallel:
         Raises
         ------
         ValueError
-            If the calculation method is not 'CCSD' or 'ICCSD-PT'.
+            If the calculation method is not 'CCSD', 'ICCSD', or 'ICCSD-PT'.
         """
         self.logger.info(f"[CALC INFO] Starting {calc} calculation with {self.nproc} processors")
-        for x in range(n_iter):
-            if calc == 'CCSD':
-                self.logger.info(f"|| -------------- CCSD --------------- ||")
-                pool = Pool(self.nproc)
-                tau = cp.deepcopy(t2) 
-                tau += np.einsum('ia,jb->ijab', t1, t1)
-                result_comb_temp1 = pool.apply_async(self.diagram_builder.update1, args=(occ,nao,t1,t2,tau,Fock_mo,twoelecint_mo,))
-                result_comb_temp2 = pool.apply_async(self.diagram_builder.update2, args=(occ,nao,t1,tau,twoelecint_mo,))
-                result_comb_temp3 = pool.apply_async(self.diagram_builder.update10, args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab3_temp = pool.apply_async(self.diagram_builder.update3,args=(occ,nao,tau,t1,t2,twoelecint_mo,))
-                R_ijab4_temp = pool.apply_async(self.diagram_builder.update4,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab5_temp = pool.apply_async(self.diagram_builder.update5,args=(occ,virt,nao,t1,t2,twoelecint_mo,))
-                R_ijab6_temp = pool.apply_async(self.diagram_builder.update6,args=(occ,virt,nao,t1,t2,twoelecint_mo,))
-                R_ijab7_temp = pool.apply_async(self.diagram_builder.update7,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab8_temp = pool.apply_async(self.diagram_builder.update8,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab9_temp = pool.apply_async(self.diagram_builder.update9,args=(occ,nao,tau,twoelecint_mo,))
-                pool.close()
-                pool.join()
+        tasks_per_iter = 10 if calc != 'ICCSD' else 12
+        nproc = min(self.nproc, tasks_per_iter)
+        
+        with Pool(processes=nproc, maxtasksperchild=10) as pool:
+            for x in range(n_iter):
+                tau = np.empty_like(t2)
+                np.einsum('ia,jb->ijab', t1, t1, out=tau)
+                tau += t2
+                if calc == 'CCSD':
+                    if x%2 == 0:
+                        self.logger.info(f"|| -------------- CCSD --------------- ||")
+                    tasks = [
+                        (self.diagram_builder.update1, (occ, nao, t1, t2, tau, Fock_mo, twoelecint_mo)),
+                        (self.diagram_builder.update2, (occ, nao, t1, tau, twoelecint_mo)),
+                        (self.diagram_builder.update10, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update3, (occ, nao, tau, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update4, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update5, (occ, virt, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update6, (occ, virt, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update7, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update8, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update9, (occ, nao, tau, twoelecint_mo)),
+                    ]
+                    #results = pool.starmap(_execute_tasks, tasks)
+                    results = pool.starmap_async(_execute_tasks, tasks).get()
 
-                R_ia1, R_ijab1 = result_comb_temp1.get()
-                R_ia2, R_ijab2 = result_comb_temp2.get()
-                R_ia10, R_ijab10 = result_comb_temp3.get()
-                R_ijab3 = R_ijab3_temp.get()
-                R_ijab4 = R_ijab4_temp.get()
-                R_ijab5 = R_ijab5_temp.get()
-                R_ijab6 = R_ijab6_temp.get()
-                R_ijab7 = R_ijab7_temp.get()
-                R_ijab8 = R_ijab8_temp.get()
-                R_ijab9 = R_ijab9_temp.get()
+                    R_ia1, R_ijab1 = results[0]
+                    R_ia2, R_ijab2 = results[1]
+                    R_ia10, R_ijab10 = results[2]
+                    R_ijab3 = results[3]
+                    R_ijab4 = results[4]
+                    R_ijab5 = results[5]
+                    R_ijab6 = results[6]
+                    R_ijab7 = results[7]
+                    R_ijab8 = results[8]
+                    R_ijab9 = results[9]
 
-                R_ia = (R_ia1+R_ia2+R_ia10)
-                R_ijab = (R_ijab1+R_ijab2+R_ijab3+R_ijab4+R_ijab5+R_ijab6+R_ijab7+R_ijab8+R_ijab9+R_ijab10)
-
-                R_ijab = self.symmetrizer.symmetrize(occ,virt,R_ijab)
-                eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia,R_ijab,t1,t2,D1,D2)
-
-                E_ccd = self.energy_ccsd(occ, nao, t1, t2, twoelecint_mo)
-                val, E_ccd = self.convergence(E_ccd, E_old, eps_t, conv, x)
-                if val:
-                    self.logger.info(f"correlation energy: {E_ccd}")
-                    break
-                E_old = E_ccd
-
-            if calc == 'ICCSD':
-                self.logger.info(f"|| -------------- ICCSD --------------- ||")
-                pool = Pool(self.nproc)
-                tau = cp.deepcopy(t2)
-                tau += np.einsum('ia,jb->ijab',t1,t1)
-            
-                result_comb_temp1 = pool.apply_async(self.diagram_builder.update1,args=(occ,nao,t1,t2,tau,Fock_mo,twoelecint_mo,))
-                result_comb_temp2 = pool.apply_async(self.diagram_builder.update2,args=(occ,nao,t1,tau,twoelecint_mo,))
-                result_comb_temp3 = pool.apply_async(self.diagram_builder.update10,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab3_temp = pool.apply_async(self.diagram_builder.update3,args=(occ,nao,tau,t1,t2,twoelecint_mo,))
-                R_ijab4_temp = pool.apply_async(self.diagram_builder.update4,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab5_temp = pool.apply_async(self.diagram_builder.update5,args=(occ,virt,nao,t1,t2,twoelecint_mo,))
-                R_ijab6_temp = pool.apply_async(self.diagram_builder.update6,args=(occ,virt,nao,t1,t2,twoelecint_mo,))
-                R_ijab7_temp = pool.apply_async(self.diagram_builder.update7,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab8_temp = pool.apply_async(self.diagram_builder.update8,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab9_temp = pool.apply_async(self.diagram_builder.update9,args=(occ,nao,tau,twoelecint_mo,))
-                R_iuab_temp = pool.apply_async(self.diagram_builder.Sv_diagrams,args=(occ,v_act,nao,Sv,t2,Fock_mo,twoelecint_mo,))
-                R_ijav_temp = pool.apply_async(self.diagram_builder.So_diagrams,args=(occ,o_act,nao,So,t2,Fock_mo,twoelecint_mo,))
-
-                pool.close()
-                pool.join()
-            
-                R_ia1, R_ijab1 = result_comb_temp1.get() 
-                R_ia2, R_ijab2 = result_comb_temp2.get() 
-                R_ia10, R_ijab10 = result_comb_temp3.get() 
-                R_ijab3 = R_ijab3_temp.get()
-                R_ijab4 = R_ijab4_temp.get()
-                R_ijab5 = R_ijab5_temp.get()
-                R_ijab6 = R_ijab6_temp.get()
-                R_ijab7 = R_ijab7_temp.get()
-                R_ijab8 = R_ijab8_temp.get()
-                R_ijab9 = R_ijab9_temp.get()
-            
-                R_ia = (R_ia1+R_ia2+R_ia10)
-                R_ijab = (R_ijab1+R_ijab2+R_ijab3+R_ijab4+R_ijab5+R_ijab6+R_ijab7+R_ijab8+R_ijab9+R_ijab10)
-                R_ijab += self.diagram_builder.So_int_diagrams(occ,o_act,nao,So,t2,twoelecint_mo)[0]
-                R_ijab += self.diagram_builder.Sv_int_diagrams(occ,virt,v_act,nao,Sv,t2,twoelecint_mo)[0]
-                R_ijab = self.symmetrizer.symmetrize(occ,virt,R_ijab)
-            
-                R_iuab = R_iuab_temp.get()
-                R_ijav = R_ijav_temp.get() 
-            
-                eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia,R_ijab,t1,t2,D1,D2)
-                eps_So, So = self.amplitude_updater.update_So(R_ijav,So,Do,conv)
-                eps_Sv, Sv = self.amplitude_updater.update_Sv(R_iuab,Sv,Dv,conv)
-
-                E_ccd = self.energy_ccsd(occ,nao,t1,t2,twoelecint_mo)
-                val, E_ccd = self.convergence_I(E_ccd,E_old,eps_t,eps_So,eps_Sv,conv,x)
-                if val:
-                    break
-                else:
+                    R_ia = (R_ia1 + R_ia2 + R_ia10)
+                    R_ijab = (R_ijab1 + R_ijab2 + R_ijab3 + R_ijab4 + R_ijab5 + R_ijab6 + R_ijab7 + R_ijab8 + R_ijab9 + R_ijab10)
+                    R_ijab = self.symmetrizer.symmetrize(occ, virt, R_ijab)
+                    eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia, R_ijab, t1, t2, D1, D2)
+                    E_ccd = self.energy_ccsd(occ, nao, t1, t2, twoelecint_mo)
+                    val, E_ccd = self.convergence(E_ccd, E_old, eps_t, conv, x)
+                    if val:
+                        self.logger.info(f"correlation energy: {E_ccd}")
+                        break
                     E_old = E_ccd
-                    
-            if calc == 'ICCSD-PT':
-                self.logger.info(f"|| -------------- ICCSD-PT --------------- ||")
-                pool = Pool(self.nproc)
-                tau = cp.deepcopy(t2)
-                tau += np.einsum('ia,jb->ijab',t1,t1)
-            
-                result_comb_temp1 = pool.apply_async(self.diagram_builder.update1,args=(occ,nao,t1,t2,tau,Fock_mo,twoelecint_mo,))
-                result_comb_temp2 = pool.apply_async(self.diagram_builder.update2,args=(occ,nao,t1,tau,twoelecint_mo,))
-                result_comb_temp3 = pool.apply_async(self.diagram_builder.update10,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab3_temp = pool.apply_async(self.diagram_builder.update3,args=(occ,nao,tau,t1,t2,twoelecint_mo,))
-                R_ijab4_temp = pool.apply_async(self.diagram_builder.update4,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab5_temp = pool.apply_async(self.diagram_builder.update5,args=(occ,virt,nao,t1,t2,twoelecint_mo,))
-                R_ijab6_temp = pool.apply_async(self.diagram_builder.update6,args=(occ,virt,nao,t1,t2,twoelecint_mo,))
-                R_ijab7_temp = pool.apply_async(self.diagram_builder.update7,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab8_temp = pool.apply_async(self.diagram_builder.update8,args=(occ,nao,t1,t2,twoelecint_mo,))
-                R_ijab9_temp = pool.apply_async(self.diagram_builder.update9,args=(occ,nao,tau,twoelecint_mo,))
-            
-                pool.close()
-                pool.join()
-            
-                R_ia1, R_ijab1 = result_comb_temp1.get() 
-                R_ia2, R_ijab2 = result_comb_temp2.get() 
-                R_ia10, R_ijab10 = result_comb_temp3.get() 
-                R_ijab3 = R_ijab3_temp.get()
-                R_ijab4 = R_ijab4_temp.get()
-                R_ijab5 = R_ijab5_temp.get()
-                R_ijab6 = R_ijab6_temp.get()
-                R_ijab7 = R_ijab7_temp.get()
-                R_ijab8 = R_ijab8_temp.get()
-                R_ijab9 = R_ijab9_temp.get()
-            
-                R_ia = (R_ia1+R_ia2+R_ia10)
-                R_ijab = (R_ijab1+R_ijab2+R_ijab3+R_ijab4+R_ijab5+R_ijab6+R_ijab7+R_ijab8+R_ijab9+R_ijab10)
-                R_ijab += self.diagram_builder.So_int_diagrams(occ,o_act,nao,So,t2,twoelecint_mo)[0]
-                R_ijab += self.diagram_builder.Sv_int_diagrams(occ,virt,v_act,nao,Sv,t2,twoelecint_mo)[0]
-                R_ijab = self.symmetrizer.symmetrize(occ, virt, R_ijab)
 
-                eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia, R_ijab, t1, t2, D1, D2)
-                E_ccd = self.energy_ccsd(occ, nao, t1, t2, twoelecint_mo)
-                val, E_ccd = self.convergence(E_ccd, E_old, eps_t, conv, x)
-                if val:
-                    break
-                else:
-                    E_old = E_ccd
+                if calc == 'ICCSD':
+                    if x%2 == 0:
+                        self.logger.info(f"|| -------------- ICCSD --------------- ||")
+                    tasks = [
+                        (self.diagram_builder.update1, (occ, nao, t1, t2, tau, Fock_mo, twoelecint_mo)),
+                        (self.diagram_builder.update2, (occ, nao, t1, tau, twoelecint_mo)),
+                        (self.diagram_builder.update10, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update3, (occ, nao, tau, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update4, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update5, (occ, virt, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update6, (occ, virt, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update7, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update8, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update9, (occ, nao, tau, twoelecint_mo)),
+                        (self.diagram_builder.Sv_diagrams, (occ, v_act, nao, Sv, t2, Fock_mo, twoelecint_mo)),
+                        (self.diagram_builder.So_diagrams, (occ, o_act, nao, So, t2, Fock_mo, twoelecint_mo)),
+                    ]
+                    #results = pool.starmap(_execute_tasks, tasks)
+                    results = pool.starmap_async(_execute_tasks, tasks).get()
+
+                    R_ia1, R_ijab1 = results[0]
+                    R_ia2, R_ijab2 = results[1]
+                    R_ia10, R_ijab10 = results[2]
+                    R_ijab3 = results[3]
+                    R_ijab4 = results[4]
+                    R_ijab5 = results[5]
+                    R_ijab6 = results[6]
+                    R_ijab7 = results[7]
+                    R_ijab8 = results[8]
+                    R_ijab9 = results[9]
+                    R_iuab = results[10]
+                    R_ijav = results[11]
+
+                    R_ia = (R_ia1 + R_ia2 + R_ia10)
+                    R_ijab = (R_ijab1 + R_ijab2 + R_ijab3 + R_ijab4 + R_ijab5 + R_ijab6 + R_ijab7 + R_ijab8 + R_ijab9 + R_ijab10)
+                    R_ijab += self.diagram_builder.So_int_diagrams(occ, o_act, nao, So, t2, twoelecint_mo)[0]
+                    R_ijab += self.diagram_builder.Sv_int_diagrams(occ, virt, v_act, nao, Sv, t2, twoelecint_mo)[0]
+                    R_ijab = self.symmetrizer.symmetrize(occ, virt, R_ijab)
+
+                    eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia, R_ijab, t1, t2, D1, D2)
+                    eps_So, So = self.amplitude_updater.update_So(R_ijav, So, Do, conv)
+                    eps_Sv, Sv = self.amplitude_updater.update_Sv(R_iuab, Sv, Dv, conv)
+
+                    E_ccd = self.energy_ccsd(occ, nao, t1, t2, twoelecint_mo)
+                    val, E_ccd = self.convergence_I(E_ccd, E_old, eps_t, eps_So, eps_Sv, conv, x)
+                    if val:
+                        break
+                    else:
+                        E_old = E_ccd
+
+                if calc == 'ICCSD-PT':
+                    if x%2 == 0:
+                        self.logger.info(f"|| -------------- ICCSD-PT --------------- ||")
+                    tasks = [
+                        (self.diagram_builder.update1, (occ, nao, t1, t2, tau, Fock_mo, twoelecint_mo)),
+                        (self.diagram_builder.update2, (occ, nao, t1, tau, twoelecint_mo)),
+                        (self.diagram_builder.update10, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update3, (occ, nao, tau, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update4, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update5, (occ, virt, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update6, (occ, virt, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update7, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update8, (occ, nao, t1, t2, twoelecint_mo)),
+                        (self.diagram_builder.update9, (occ, nao, tau, twoelecint_mo)),
+                    ]
+                    #results = pool.starmap(_execute_tasks, tasks)
+                    results = pool.starmap_async(_execute_tasks, tasks).get()
+
+                    R_ia1, R_ijab1 = results[0]
+                    R_ia2, R_ijab2 = results[1]
+                    R_ia10, R_ijab10 = results[2]
+                    R_ijab3 = results[3]
+                    R_ijab4 = results[4]
+                    R_ijab5 = results[5]
+                    R_ijab6 = results[6]
+                    R_ijab7 = results[7]
+                    R_ijab8 = results[8]
+                    R_ijab9 = results[9]
+
+                    R_ia = (R_ia1 + R_ia2 + R_ia10)
+                    R_ijab = (R_ijab1 + R_ijab2 + R_ijab3 + R_ijab4 + R_ijab5 + R_ijab6 + R_ijab7 + R_ijab8 + R_ijab9 + R_ijab10)
+                    R_ijab += self.diagram_builder.So_int_diagrams(occ, o_act, nao, So, t2, twoelecint_mo)[0]
+                    R_ijab += self.diagram_builder.Sv_int_diagrams(occ, virt, v_act, nao, Sv, t2, twoelecint_mo)[0]
+                    R_ijab = self.symmetrizer.symmetrize(occ, virt, R_ijab)
+
+                    eps_t, t1, t2 = self.amplitude_updater.update_t1t2(R_ia, R_ijab, t1, t2, D1, D2)
+                    E_ccd = self.energy_ccsd(occ, nao, t1, t2, twoelecint_mo)
+                    val, E_ccd = self.convergence(E_ccd, E_old, eps_t, conv, x)
+                    if val:
+                        break
+                    else:
+                        E_old = E_ccd
                     
         self.logger.info(f"[CALC INFO] CC Calculation completed after {x+1} iterations")
         return E_ccd, x

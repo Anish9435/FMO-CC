@@ -152,6 +152,7 @@ FMO-CC/
 │
 ├── pyproject.toml                   # Packaging config (PEP 621 / pip install)
 ├── input.json                       # Example input file for FMO-CC
+├── LICENSE                          # License file
 ├── setup.sh                         # Script to automate installation
 └── README.md                        # Project documentation and usage guide
 ```

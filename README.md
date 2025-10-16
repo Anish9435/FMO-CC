@@ -1,4 +1,4 @@
-# 🔬 FMO-CC: Fragment Molecular Orbital with Coupled Cluster
+# 🔬 FMO-CC: Fragment Molecular Orbital Method with Coupled Cluster
 
 ## 🌟 Summary  
 **FMO-CC** is a Python package for **fragment-based quantum chemistry calculations**, combining the **Fragment Molecular Orbital (FMO)** method 
@@ -13,20 +13,20 @@ a **research-grade, modular, parallelizable, and reproducible framework** for el
 ## 🚀 Key Features
 
 ### **Quantum Chemistry Methods**
- - Fragment Molecular Orbital (FMO) framework supporting RHF, MP2, and CC methods (CCSD, ICCSD, ICCSD-PT)
- - Configurable frozen occupied and virtual orbital treatments
- - Flexible support for both FMO1 (one-body) and FMO2 (two-body) calculations
+ - Fragment Molecular Orbital (FMO) framework supporting RHF, MP2, and CC methods, including CCSD, ICCSD, ICCSD-PT
+ - Enables flexible frozen occupied and unoccupied orbital specifications
+ - Flexible support for both FMO1 (one-body) and FMO2 (two-body) calculations for accurate many-body expansion treatments
 
 ### **Selection of active orbitals**
- - Automated detection of **chemically relevant orbitals** based on HOMO–LUMO proximity
- - User-controlled overrides via input file for fine-grained orbital specification
+ - Provides automated detection of **chemically relevant orbitals** based on HOMO–LUMO proximity
+ - Allows user-controlled overrides via input file for fine-grained orbital specification
 
 ### **Parallelization**
- - Multiprocessing-enabled CC iterations for high-throughput simulations
- - Scalable architecture designed to handle large and complex molecular systems efficiently
+ - Enables multiprocessing-based parallelism for CC iterations towards high-throughput simulations
+ - Features a scalable architecture designed to handle large and complex molecular systems efficiently
 
 ### **Integration with GAMESS**
- - Automated parsing of GAMESS outputs for integrals, MO coefficients, and orbital energies
+ - Includes automated parsing of GAMESS outputs for integrals, MO coefficients, orbital energies, and other allied parameters
  - Full compatibility with standard GAMESS output formats (`.dat` for coeffients, orbitals, `_2eint.dat` for 2e integrals)
 
 ### **Configurable Input**
@@ -117,7 +117,8 @@ run_fmo_cc -c my_config.json
 
 **Note:** Use `-c your_config.json` to load all parameters from the custom made JSON file
 
-**Note:** Currently, the codebase accepts GAMESS-generated output files as input. Work is in progress to automate the fragmentation process and GAMESS execution. Using the provided output files, the code extracts the relevant parameters for subsequent runs and computes accurate MP2 and CC energies.
+**Note:** Currently, the codebase accepts GAMESS-generated output files as input. Work is in progress to automate the fragmentation process and GAMESS execution. 
+Using the provided output files, the code extracts the relevant parameters for subsequent runs and computes accurate MP2 and CC energies.
 
 **Note:** For covalently bonded systems, it is recommended to use the input parameters `nfv_mono` and `nfv_dimer`
 

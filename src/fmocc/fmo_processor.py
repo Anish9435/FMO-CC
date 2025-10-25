@@ -90,6 +90,20 @@ class FMOProcessor:
                 max_size = 20  # 20GB for <= 60 atoms
             else:
                 max_size = 50  # 50GB for > 60 atoms
+            
+            basis = getattr(self.config, "basis_set", "").lower()
+            if "6-31g" in basis:
+                factor = 1.0   # baseline
+            elif any(x in basis for x in ["6-311g", "def2-svp", "def2sv(p)", "cc-pvdz"]):
+                factor = 1.5   # moderately larger basis
+            elif any(x in basis for x in ["def2-tzvp", "cc-pvtz", "tzvp"]):
+                factor = 2.0   # triple-zeta
+            elif any(x in basis for x in ["def2-qzvp", "cc-pvqz", "qzvp"]):
+                factor = 3.0   # quadruple-zeta or larger
+            else:
+                factor = 1.2   # unknown basis → mild increase
+
+            max_size *= factor
             if file_size > max_size:
                 self.logger.error(f"[FILE ERROR] {file_desc} file {file_path} size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")
                 raise ValueError(f"{file_desc} file size ({file_size:.2f} GB) exceeds limit ({max_size} GB) for {total_atoms} atoms")

@@ -2,9 +2,9 @@
   "common": {
     "method": "ICCSD-PT",
     "conv": 1e-5,
-    "nproc": 0,
+    "nproc": 8,
     "niter": 50,
-    "filename": "3uex_631g_fmo_RHF",
+    "filename": "3nq9_631g_fmo_RHF",
     "data_dir": "/home/testuser/FMO-CC/data",
     "fmo_type": "FMO2",
     "complex_type": "covalent",
@@ -23,10 +23,10 @@
 
   "covalent": {
     "auto_active": true,
-    "active_threshold": 0.7,
-    "nfv_mono": [0, 0, 1, 5, 5, 4, 5, 0],
-    "nfv_dimer": [6, 5, 10, 5, 4, 9, 5, 5, 4, 4, 4, 0, 0, 1],
-    "occ_dimer": [31,31,32,32,32,33,33,43,43,44,44,48,54,58]
+    "active_threshold": 1.0,
+    "nfv_mono": [4,5,1,4,0,1],
+    "nfv_dimer": [8,5,5,2,4,1,0,9,6,4,4,1,5,4],
+    "occ_dimer": [24,26,27,32,33,25,31,35,33,34,36,44,45,43]
   },
 
   "fragment_index": [[1, 6], [7, 9], [10, 12]],

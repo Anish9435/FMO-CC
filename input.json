@@ -1,6 +1,6 @@
 {
   "common": {
-    "method": "ICCSD-PT",
+    "method": "MP2",
     "conv": 1e-5,
     "nproc": 8,
     "niter": 50,

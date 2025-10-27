@@ -191,6 +191,7 @@ class FMOProcessor:
         if self.config.method == "MP2":
             corr_energy = fmo_mp2_corr
             Tot_MP2 = FMO_RHF + fmo_mp2_corr
+            Tot_CC = Tot_MP2
             self.logger.info(f"[ENERGY INFO] MP2 correlation energy: {corr_energy}, Total MP2 energy: {Tot_MP2}")
         else:
             corr_energy = fmo_cc_corr

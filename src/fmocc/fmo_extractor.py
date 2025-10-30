@@ -261,7 +261,7 @@ class FMOExtractor:
         ini_idx = 0
         tot = lnum
         for i,line in enumerate(reversed(outlines[:lnum])):
-            if line.strip() == "I  NAME     Q NAT0 NATB NA  NAO LAY MUL SCFTYP        NOP     MOL    CONV":
+            if line.strip() == "I  NAME     Q NAT0 NGA   NA  NAO  NMO L  MUL SCFTYP      NOP   MOL    CONV":
                 self.lnum = tot-i
                 ini_idx = tot-i+1
                 break
